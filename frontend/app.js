@@ -2319,6 +2319,20 @@
 
     loadData();
 
+    // Auto-sync dashboard with newly ingested road distress every 4 seconds
+    setInterval(() => {
+      if (state.backendOnline && !state.selectedDefect) {
+        loadData();
+      }
+    }, 4000);
+
+    // Also reload immediately when user switches tabs or window gains focus
+    window.addEventListener('focus', () => {
+      if (state.backendOnline && !state.selectedDefect) {
+        loadData();
+      }
+    });
+
     // If first visit, show Kolhapur Zone selection modal
     if (!state.isLoggedIn) {
       openLoginModal();

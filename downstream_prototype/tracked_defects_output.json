@@ -1,1 +1,296 @@
-[]
+[
+  {
+    "defect_id": 2,
+    "class_name": "alligator_crack",
+    "severity": "Medium",
+    "confidence": 0.3199,
+    "frame_index": 13,
+    "timestamp": "2026-09-16 20:41:16",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.2045,
+      0.7683,
+      0.294,
+      0.2222
+    ]
+  },
+  {
+    "defect_id": 3,
+    "class_name": "alligator_crack",
+    "severity": "High",
+    "confidence": 0.8313,
+    "frame_index": 55,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.1334,
+      0.6997,
+      0.7213,
+      0.3001
+    ]
+  },
+  {
+    "defect_id": 4,
+    "class_name": "pothole",
+    "severity": "Low",
+    "confidence": 0.7257,
+    "frame_index": 23,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.3712,
+      0.7766,
+      0.1224,
+      0.0788
+    ]
+  },
+  {
+    "defect_id": 5,
+    "class_name": "pothole",
+    "severity": "Low",
+    "confidence": 0.3202,
+    "frame_index": 23,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.6131,
+      0.5876,
+      0.1049,
+      0.1339
+    ]
+  },
+  {
+    "defect_id": 13,
+    "class_name": "pothole",
+    "severity": "Low",
+    "confidence": 0.6444,
+    "frame_index": 39,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.4809,
+      0.4911,
+      0.1212,
+      0.0766
+    ]
+  },
+  {
+    "defect_id": 16,
+    "class_name": "alligator_crack",
+    "severity": "Low",
+    "confidence": 0.506,
+    "frame_index": 64,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.6776,
+      0.7763,
+      0.2694,
+      0.1005
+    ]
+  },
+  {
+    "defect_id": 17,
+    "class_name": "alligator_crack",
+    "severity": "High",
+    "confidence": 0.6842,
+    "frame_index": 84,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.061,
+      0.5674,
+      0.4174,
+      0.4275
+    ]
+  },
+  {
+    "defect_id": 18,
+    "class_name": "alligator_crack",
+    "severity": "High",
+    "confidence": 0.3511,
+    "frame_index": 62,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.1609,
+      0.543,
+      0.2787,
+      0.4443
+    ]
+  },
+  {
+    "defect_id": 19,
+    "class_name": "alligator_crack",
+    "severity": "Medium",
+    "confidence": 0.3209,
+    "frame_index": 68,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.3277,
+      0.7218,
+      0.2806,
+      0.1833
+    ]
+  },
+  {
+    "defect_id": 20,
+    "class_name": "alligator_crack",
+    "severity": "Medium",
+    "confidence": 0.4819,
+    "frame_index": 94,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.5416,
+      0.7341,
+      0.1874,
+      0.2217
+    ]
+  },
+  {
+    "defect_id": 21,
+    "class_name": "pothole",
+    "severity": "Low",
+    "confidence": 0.6913,
+    "frame_index": 97,
+    "timestamp": "2026-09-16 20:41:17",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.9007,
+      0.7395,
+      0.0993,
+      0.0577
+    ]
+  },
+  {
+    "defect_id": 22,
+    "class_name": "alligator_crack",
+    "severity": "High",
+    "confidence": 0.5084,
+    "frame_index": 120,
+    "timestamp": "2026-09-16 20:41:18",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.0389,
+      0.6077,
+      0.7073,
+      0.392
+    ]
+  },
+  {
+    "defect_id": 28,
+    "class_name": "alligator_crack",
+    "severity": "Low",
+    "confidence": 0.6257,
+    "frame_index": 117,
+    "timestamp": "2026-09-16 20:41:18",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.2863,
+      0.7407,
+      0.1548,
+      0.1892
+    ]
+  },
+  {
+    "defect_id": 29,
+    "class_name": "alligator_crack",
+    "severity": "Low",
+    "confidence": 0.4791,
+    "frame_index": 117,
+    "timestamp": "2026-09-16 20:41:18",
+    "gps": {
+      "latitude": 16.705,
+      "longitude": 74.2433
+    },
+    "zone": "Central Kolhapur",
+    "area": "Shahupuri",
+    "street": "Station Road, Shahupuri",
+    "bbox_norm": [
+      0.0,
+      0.5156,
+      0.1849,
+      0.2082
+    ]
+  }
+]

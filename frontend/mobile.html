@@ -137,13 +137,21 @@
       background: rgba(16, 185, 129, 0.95);
       border: 1px solid #34d399;
       color: #fff;
-      padding: 6px 14px;
-      border-radius: 6px;
+      padding: 7px 16px;
+      border-radius: 8px;
       font-weight: 600;
       font-size: 12px;
       display: none;
       z-index: 10;
       white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #report-banner:active {
+      transform: translateX(-50%) scale(0.97);
+      background: rgba(5, 150, 105, 0.98);
     }
 
     /* Bottom HUD Bar */
@@ -271,10 +279,15 @@
         <span class="pulse-dot"></span>
         <span id="patrol-status">PATROL ACTIVE</span>
       </div>
-      <div class="hud-metrics">
-        <span id="fps-display">-- FPS</span>
-        <span>|</span>
-        <span id="latency-display">-- ms</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="hud-metrics">
+          <span id="fps-display">-- FPS</span>
+          <span>|</span>
+          <span id="latency-display">-- ms</span>
+        </div>
+        <a href="/" target="_blank" style="text-decoration: none; color: #38bdf8; font-size: 11px; font-weight: 700; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(8px);">
+          <span>📊 Dashboard ↗</span>
+        </a>
       </div>
     </div>
 
@@ -578,9 +591,12 @@
       // Reported Banner Feedback
       if (res.recorded_defect_id) {
         reportBanner.style.display = "block";
-        reportBanner.textContent = `✅ REPORTED TO MUNICIPALITY: #${res.recorded_defect_id}`;
+        reportBanner.innerHTML = `✅ REPORTED: #${res.recorded_defect_id} <span style="background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 4px; margin-left: 6px; text-decoration: underline; font-weight: 700;">View on Dashboard &rarr;</span>`;
+        reportBanner.onclick = () => {
+          window.location.href = "/";
+        };
         playBeep(1100, 0.3);
-        setTimeout(() => { reportBanner.style.display = "none"; }, 3500);
+        setTimeout(() => { reportBanner.style.display = "none"; }, 6000);
       }
     }
 
