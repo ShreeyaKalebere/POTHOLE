@@ -1,0 +1,162 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "KOLHAPUR 5-ZONE OPERATIONAL ROAD-DAMAGE MAP",
+    "subtitle": "Project-defined operational zones for regional case-study analysis.",
+    "disclaimer": "IMPORTANT: These are PROJECT-DEFINED OPERATIONAL ZONES for academic/case-study analysis, NOT official Kolhapur Municipal Corporation (KMC) legal ward boundaries.",
+    "region": "Kolhapur, Maharashtra, India",
+    "version": "2.0.0"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "central_kolhapur",
+      "properties": {
+        "zone_id": "central_kolhapur",
+        "zone_name": "Central Kolhapur",
+        "title": "Central Kolhapur Zone",
+        "role": "Ward Officer - Central Kolhapur",
+        "center": [16.7040, 74.2380],
+        "localities": ["Shahupuri", "Laxmipuri", "Rajarampuri", "Station Road"],
+        "localities_str": "Shahupuri, Laxmipuri, Rajarampuri, Station Road",
+        "challenges": "High-density commercial transit, recurrent municipal pipeline excavation, heavy bus terminal traffic, severe asphalt fatigue cracking.",
+        "color": "#3b82f6",
+        "border_color": "#1d4ed8",
+        "fill_opacity": 0.28,
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [74.220, 16.715],
+            [74.252, 16.715],
+            [74.252, 16.696],
+            [74.220, 16.696],
+            [74.220, 16.715]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "north_kolhapur",
+      "properties": {
+        "zone_id": "north_kolhapur",
+        "zone_name": "North Kolhapur",
+        "title": "North Kolhapur Zone",
+        "role": "Ward Officer - North Kolhapur",
+        "center": [16.7250, 74.2480],
+        "localities": ["Ujalaiwadi", "Kasaba Bawada side"],
+        "localities_str": "Ujalaiwadi, Kasaba Bawada side",
+        "challenges": "Panchganga river basin waterlogging during monsoon, subgrade pavement moisture saturation, asphalt edge raveling.",
+        "color": "#10b981",
+        "border_color": "#047857",
+        "fill_opacity": 0.28,
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [74.220, 16.745],
+            [74.270, 16.745],
+            [74.270, 16.715],
+            [74.220, 16.715],
+            [74.220, 16.745]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "south_kolhapur",
+      "properties": {
+        "zone_id": "south_kolhapur",
+        "zone_name": "South Kolhapur",
+        "title": "South Kolhapur Zone",
+        "role": "Ward Officer - South Kolhapur",
+        "center": [16.6750, 74.2280],
+        "localities": ["Kalamba", "Morewadi side"],
+        "localities_str": "Kalamba, Morewadi side",
+        "challenges": "Rapid suburban residential expansion, heavy dumper & concrete mixer transit, unpaved shoulder breakdown, deep edge craters.",
+        "color": "#f59e0b",
+        "border_color": "#b45309",
+        "fill_opacity": 0.28,
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [74.220, 16.696],
+            [74.252, 16.696],
+            [74.252, 16.655],
+            [74.220, 16.655],
+            [74.220, 16.696]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "east_kolhapur",
+      "properties": {
+        "zone_id": "east_kolhapur",
+        "zone_name": "East Kolhapur",
+        "title": "East Kolhapur Zone",
+        "role": "Ward Officer - East Kolhapur",
+        "center": [16.6850, 74.2750],
+        "localities": ["Uchgaon", "Gokul Shirgaon MIDC"],
+        "localities_str": "Uchgaon, Gokul Shirgaon MIDC",
+        "challenges": "Multi-axle industrial cargo haulage, freight transport shear stresses, severe interconnected alligator mesh cracking.",
+        "color": "#8b5cf6",
+        "border_color": "#6d28d9",
+        "fill_opacity": 0.28,
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [74.252, 16.715],
+            [74.300, 16.715],
+            [74.300, 16.655],
+            [74.252, 16.655],
+            [74.252, 16.715]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "west_kolhapur",
+      "properties": {
+        "zone_id": "west_kolhapur",
+        "zone_name": "West Kolhapur",
+        "title": "West Kolhapur Zone",
+        "role": "Ward Officer - West Kolhapur",
+        "center": [16.6920, 74.2050],
+        "localities": ["Rankala Lake Promenade", "Phulewadi"],
+        "localities_str": "Rankala Lake Promenade, Phulewadi",
+        "challenges": "High tourist vehicular density, lake perimeter moisture seepage, cobblestone-asphalt interface detachment, sharp rim-impact potholes.",
+        "color": "#f43f5e",
+        "border_color": "#be123c",
+        "fill_opacity": 0.28,
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [74.180, 16.715],
+            [74.220, 16.715],
+            [74.220, 16.665],
+            [74.180, 16.665],
+            [74.180, 16.715]
+          ]
+        ]
+      }
+    }
+  ]
+}

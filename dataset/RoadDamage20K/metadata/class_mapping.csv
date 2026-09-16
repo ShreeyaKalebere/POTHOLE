@@ -1,0 +1,21 @@
+source_class_raw,mapped_class_name,final_class_id,status
+D40,pothole,0,retained
+D20,alligator_crack,1,retained
+D00,longitudinal_crack,-1,discarded
+D10,transverse_crack,-1,discarded
+D43,crosswalk_blur,-1,discarded
+D44,white_line_blur,-1,discarded
+D50,other,-1,discarded
+pothole,pothole,0,retained
+Pothole,pothole,0,retained
+alligator crack,alligator_crack,1,retained
+alligator_crack,alligator_crack,1,retained
+Alligator Crack,alligator_crack,1,retained
+mesh crack,alligator_crack,1,retained
+mesh_crack,alligator_crack,1,retained
+fatigue crack,alligator_crack,1,retained
+longitudinal crack,longitudinal_crack,-1,discarded
+transverse crack,transverse_crack,-1,discarded
+patch,repair_patch,-1,discarded
+repair,repair_patch,-1,discarded
+manhole,manhole,-1,discarded

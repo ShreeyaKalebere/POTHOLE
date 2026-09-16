@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & Virtual Envs
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Ultralytics Training & Inference Runs
+runs/
+
+# Large Datasets, Images, and Archives
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+dataset/RoadDamage20K/raw/
+dataset/RoadDamage20K/intermediate/
+dataset/RoadDamage20K/images/
+dataset/RoadDamage20K/labels/
+dataset/RoadDamage20K/qa/visual_samples/
+*.cache
+
+# Database & SQLite files
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+
+# Scratch and Temporary directories
+scratch/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Jupyter Notebook checkpoints & temp backup
+.ipynb_checkpoints/
+Untitled1_backup_original.ipynb
+Untitled1.ipynb
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

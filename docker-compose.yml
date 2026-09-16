@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Municipal FastAPI Ingestion Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: roadcare-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+    volumes:
+      - ./backend/road_damage.db:/app/road_damage.db
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  # Enterprise Geospatial Database
+  mongo:
+    image: mongo:latest
+    container_name: roadcare-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # Municipal Web Dashboard
+  frontend:
+    image: nginx:alpine
+    container_name: roadcare-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

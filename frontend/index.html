@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Municipal Road Damage and Distress Reporting Dashboard. Real-time YOLO11 detection, ByteTrack tracking, and automated triage for potholes and alligator cracks.">
+  <title>RoadCare AI - Municipal Road Distress & Reporting System</title>
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-theme">
+  <!-- App Container -->
+  <div class="app-layout">
+    
+    <!-- Top Navbar -->
+    <header class="navbar" id="main-header">
+      <div class="nav-brand">
+        <div class="brand-logo-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19L19 4M4 10l5-5M15 20l5-5M2 19h20M9 19v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <div class="brand-title">RoadCare <span class="accent-text">AI</span></div>
+          <div class="brand-subtitle">Kolhapur Municipal Corporation &bull; PWD</div>
+        </div>
+      </div>
+
+      <!-- Kolhapur Zone & Officer Status Badge -->
+      <div class="officer-zone-badge" id="officer-badge">
+        <div class="zone-badge-icon" id="btn-open-modal-icon" title="Open Ward Selection Dialog" style="cursor: pointer;">🏛️</div>
+        <div class="zone-badge-text">
+          <div class="zone-officer-title" id="officer-title-display">Central Kolhapur Zone</div>
+          <div class="zone-areas-subtitle" id="officer-areas-display">Shahupuri &bull; Laxmipuri &bull; Rajarampuri</div>
+        </div>
+        <select id="header-zone-select" class="header-zone-select" aria-label="Select Kolhapur Administrative Zone">
+          <option value="Central Kolhapur" selected>Central Kolhapur</option>
+          <option value="North Kolhapur">North Kolhapur</option>
+          <option value="South Kolhapur">South Kolhapur</option>
+          <option value="East Kolhapur">East Kolhapur</option>
+          <option value="West Kolhapur">West Kolhapur</option>
+          <option value="all">All Kolhapur City</option>
+        </select>
+        <button class="btn-zone-switch" id="btn-switch-zone" title="Click to cycle to the next Kolhapur area immediately">Change Area ⟳</button>
+      </div>
+
+      <!-- Live Stream Pill -->
+      <div class="live-pill" id="connection-pill">
+        <span class="live-dot pulse"></span>
+        <span class="live-text" id="connection-status-text">Live Ingestion Active</span>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="nav-actions">
+        <button class="btn btn-secondary" id="btn-theme-toggle" title="Toggle Light/Dark Theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="theme-toggle-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span id="theme-toggle-text">Dark Mode</span>
+        </button>
+        <button class="btn btn-secondary" id="btn-seed-data" title="Load sample vehicle detections">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Load Live Detections</span>
+        </button>
+        <button class="btn btn-patrol-hud" id="btn-open-patrol" title="Launch Real-Time Dashcam Vehicle Patrol & Edge AI Stream">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>📹 Live Patrol</span>
+        </button>
+        <button class="btn btn-secondary" id="btn-open-mobile" title="Connect Mobile Phone Camera for Live Road Scanning" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>📱 Mobile Camera</span>
+        </button>
+        <button class="btn btn-primary" id="btn-export-report">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Municipal Export</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      
+      <!-- Page Header & Statistics Cards -->
+      <section class="metrics-grid" aria-label="Municipal Key Performance Indicators">
+        <div class="metric-card glow-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Road Defects</span>
+            <div class="metric-icon-wrap icon-total">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="kpi-total-defects">0</div>
+          <div class="metric-footer">
+            <span class="trend-badge positive">+16 new today</span>
+            <span class="metric-subtext">Vehicle stream verified</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-card">
+          <div class="metric-header">
+            <span class="metric-label">Active Potholes</span>
+            <div class="metric-icon-wrap icon-pothole">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="kpi-potholes">0</div>
+          <div class="metric-footer">
+            <span class="badge badge-warning" id="kpi-pothole-ratio">Class 0</span>
+            <span class="metric-subtext">Cavity & crater hazards</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-card">
+          <div class="metric-header">
+            <span class="metric-label">Alligator Cracking</span>
+            <div class="metric-icon-wrap icon-crack">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="kpi-alligator">0</div>
+          <div class="metric-footer">
+            <span class="badge badge-cyan" id="kpi-crack-ratio">Class 1</span>
+            <span class="metric-subtext">Interconnected fatigue mesh</span>
+          </div>
+        </div>
+
+        <div class="metric-card glow-card">
+          <div class="metric-header">
+            <span class="metric-label">High-Hazard Priority</span>
+            <div class="metric-icon-wrap icon-hazard">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+          </div>
+          <div class="metric-value critical-text" id="kpi-high-priority">0</div>
+          <div class="metric-footer">
+            <span class="badge badge-critical">Immediate Repair</span>
+            <span class="metric-subtext">Hazard area &gt; 6%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Body Grid: Map & Action Panel -->
+      <section class="dashboard-grid">
+        
+        <!-- Left: Interactive Map -->
+        <div class="panel map-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <h2 class="panel-title" id="map-panel-title">KOLHAPUR 5-ZONE OPERATIONAL ROAD-DAMAGE MAP</h2>
+              <p class="panel-subtitle" id="map-panel-subtitle">Project-defined operational zones for regional case-study analysis.</p>
+              <div class="zone-disclaimer-pill" title="Project-defined operational boundaries for academic/case-study analysis, not official municipal boundaries.">
+                ⚠️ Academic Case-Study: Project-Defined Operational Zones (Not Official KMC Boundaries)
+              </div>
+            </div>
+            <div class="map-header-actions">
+              <!-- Basemap Switcher (Google Maps Roads & Satellite Hybrid - 100% Free, Zero API Key) -->
+              <div class="basemap-selector" id="basemap-selector" title="Switch Map Imagery (Google Maps / Satellite)">
+                <button class="basemap-btn active" data-basemap="google-roads" id="btn-basemap-google-road">🗺️ Google Maps</button>
+                <button class="basemap-btn" data-basemap="google-satellite" id="btn-basemap-google-sat">🛰️ Satellite</button>
+                <button class="basemap-btn" data-basemap="osm" id="btn-basemap-osm">OSM</button>
+              </div>
+
+              <!-- Defect Filter Buttons -->
+              <div class="map-controls">
+                <button class="map-ctrl-btn active" id="filter-map-all">All</button>
+                <button class="map-ctrl-btn" id="filter-map-potholes">Potholes</button>
+                <button class="map-ctrl-btn" id="filter-map-cracks">Alligator</button>
+                <button class="map-ctrl-btn" id="filter-map-high">High Risk</button>
+              </div>
+            </div>
+          </div>
+          <div class="map-container" id="leaflet-map"></div>
+          <div class="map-legend" id="map-legend">
+            <div class="legend-group zone-legend-group">
+              <span class="legend-header-title">Operational Study Zones:</span>
+              <div class="legend-item" data-zone="central_kolhapur" title="Click to focus Central Kolhapur"><span class="legend-zone-swatch" style="background: #3b82f6;"></span> Central</div>
+              <div class="legend-item" data-zone="north_kolhapur" title="Click to focus North Kolhapur"><span class="legend-zone-swatch" style="background: #10b981;"></span> North</div>
+              <div class="legend-item" data-zone="south_kolhapur" title="Click to focus South Kolhapur"><span class="legend-zone-swatch" style="background: #f59e0b;"></span> South</div>
+              <div class="legend-item" data-zone="east_kolhapur" title="Click to focus East Kolhapur"><span class="legend-zone-swatch" style="background: #8b5cf6;"></span> East</div>
+              <div class="legend-item" data-zone="west_kolhapur" title="Click to focus West Kolhapur"><span class="legend-zone-swatch" style="background: #f43f5e;"></span> West</div>
+            </div>
+            <div class="legend-divider"></div>
+            <div class="legend-group severity-legend-group">
+              <span class="legend-header-title">Defect Severity:</span>
+              <div class="legend-item"><span class="legend-dot dot-critical"></span> High</div>
+              <div class="legend-item"><span class="legend-dot dot-warning"></span> Medium</div>
+              <div class="legend-item"><span class="legend-dot dot-success"></span> Low / Repaired</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Real-Time Incident Triage & Repair Workflow -->
+        <div class="panel triage-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <h2 class="panel-title">Defect Triage &amp; Repair Worklist</h2>
+              <p class="panel-subtitle">Multi-object tracked road events ready for contractor dispatch</p>
+            </div>
+            <span class="badge badge-neutral" id="defects-count-badge">0 items</span>
+          </div>
+
+          <!-- Filter Toolbar -->
+          <div class="triage-toolbar">
+            <div class="search-input-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-defects" placeholder="Search defect ID, ward, or class...">
+            </div>
+            <div class="filter-selects">
+              <select id="select-zone" class="form-input filter-zone-select" aria-label="Select Kolhapur Region / Area">
+                <option value="all">🌐 All Kolhapur (Citywide)</option>
+                <option value="Central Kolhapur" selected>🏛️ Central Kolhapur (Shahupuri, Laxmipuri)</option>
+                <option value="North Kolhapur">🏭 North Kolhapur (Ujalaiwadi, Kasaba Bawada)</option>
+                <option value="South Kolhapur">🌊 South Kolhapur (Kalamba, Morewadi)</option>
+                <option value="East Kolhapur">🚛 East Kolhapur (Uchgaon, Gokul Shirgaon)</option>
+                <option value="West Kolhapur">⛵ West Kolhapur (Rankala, Phulewadi)</option>
+              </select>
+              <select id="select-severity" aria-label="Filter by Severity">
+                <option value="">All Severities</option>
+                <option value="High">High Severity</option>
+                <option value="Medium">Medium Severity</option>
+                <option value="Low">Low Severity</option>
+              </select>
+              <select id="select-status" aria-label="Filter by Status">
+                <option value="">All Statuses</option>
+                <option value="reported">Reported</option>
+                <option value="inspected">Inspected</option>
+                <option value="in_progress">In Progress</option>
+                <option value="repaired">Repaired</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Triage List / Cards -->
+          <div class="triage-scroll-area" id="defects-list-container">
+            <!-- Dynamic defect cards injected here -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Defect Inspection & Assignment Modal -->
+    <div class="modal-backdrop" id="inspection-modal" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title" id="modal-defect-title">Defect Inspection #42</h3>
+            <p class="modal-subtitle" id="modal-defect-subtitle">Pothole detected via vehicle dash camera</p>
+          </div>
+          <button class="modal-close-btn" id="btn-close-modal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="modal-visualizer">
+            <div class="camera-feed-box" id="modal-canvas-box">
+              <div class="simulated-road-view" id="modal-road-preview">
+                <!-- Visual damage representation -->
+                <div class="detection-overlay-box" id="modal-bbox-preview">
+                  <span class="overlay-tag" id="modal-bbox-tag">POTHOLE 91%</span>
+                </div>
+              </div>
+            </div>
+            <div class="camera-meta-bar">
+              <span id="modal-camera-info">Sensor: DashCam-01 | Model: YOLO11n</span>
+              <span id="modal-gps-info">GPS: 19.0760° N, 72.8777° E</span>
+            </div>
+          </div>
+
+          <div class="modal-form-grid">
+            <div class="form-group">
+              <label for="form-defect-severity">Severity Rating</label>
+              <input type="text" id="form-defect-severity" readonly class="form-input readonly">
+            </div>
+            <div class="form-group">
+              <label for="form-defect-confidence">Confidence Score</label>
+              <input type="text" id="form-defect-confidence" readonly class="form-input readonly">
+            </div>
+            <div class="form-group full-width">
+              <label for="form-defect-status">Municipal Workflow Status</label>
+              <select id="form-defect-status" class="form-input">
+                <option value="reported">Reported (Pending Inspection)</option>
+                <option value="inspected">Inspected (Verified by Field Officer)</option>
+                <option value="in_progress">In Progress (Contractor Dispatched)</option>
+                <option value="repaired">Repaired &amp; Closed</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label for="form-contractor">Assigned Repair Contractor</label>
+              <input type="text" id="form-contractor" placeholder="e.g. Apex Road Works Pvt Ltd" class="form-input">
+            </div>
+            <div class="form-group full-width">
+              <label for="form-notes">Field Inspection Notes</label>
+              <textarea id="form-notes" rows="3" placeholder="Add engineering remarks, asphalt mix requirements, or road closure notes..." class="form-input"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <a href="#" id="modal-maps-link" target="_blank" class="btn btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Open in Google Maps</span>
+          </a>
+          <button class="btn btn-primary" id="btn-save-modal">Save &amp; Update Defect</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Area-Wise Kolhapur Municipal Officer Login Modal -->
+    <div class="modal-backdrop login-backdrop" id="zone-login-modal" style="display: none;">
+      <div class="modal-card login-card">
+        <div class="login-header">
+          <div class="kmc-emblem-badge">🏛️</div>
+          <div class="kmc-title-wrap">
+            <h2 class="kmc-title">Kolhapur Municipal Corporation (KMC)</h2>
+            <p class="kmc-subtitle">Road Damage & Civic Infrastructure System &bull; Maharashtra, India</p>
+          </div>
+          <button class="modal-close-btn" id="btn-close-login-modal" title="Close area selection">&times;</button>
+        </div>
+
+        <div class="login-body">
+          <div class="login-instruction">
+            Select your assigned administrative zone to inspect localized road distresses, GPS hotspots, and dispatch repair work orders:
+          </div>
+
+          <!-- Zone Quick Select Cards Grid -->
+          <div class="zone-cards-grid">
+            <div class="zone-select-card" data-zone="Central Kolhapur">
+              <div class="zcard-icon">🏛️</div>
+              <div class="zcard-content">
+                <div class="zcard-title">Central Kolhapur</div>
+                <div class="zcard-areas">Shahupuri &bull; Laxmipuri &bull; Rajarampuri</div>
+              </div>
+              <span class="zcard-badge">Ward Officer</span>
+            </div>
+
+            <div class="zone-select-card" data-zone="North Kolhapur">
+              <div class="zcard-icon">🏭</div>
+              <div class="zcard-content">
+                <div class="zcard-title">North Kolhapur</div>
+                <div class="zcard-areas">Ujalaiwadi &bull; Kasaba Bawada side</div>
+              </div>
+              <span class="zcard-badge">Ward Officer</span>
+            </div>
+
+            <div class="zone-select-card" data-zone="South Kolhapur">
+              <div class="zcard-icon">🌊</div>
+              <div class="zcard-content">
+                <div class="zcard-title">South Kolhapur</div>
+                <div class="zcard-areas">Kalamba &bull; Morewadi side</div>
+              </div>
+              <span class="zcard-badge">Ward Officer</span>
+            </div>
+
+            <div class="zone-select-card" data-zone="East Kolhapur">
+              <div class="zcard-icon">🚛</div>
+              <div class="zcard-content">
+                <div class="zcard-title">East Kolhapur</div>
+                <div class="zcard-areas">Uchgaon &bull; Gokul Shirgaon side</div>
+              </div>
+              <span class="zcard-badge">Ward Officer</span>
+            </div>
+
+            <div class="zone-select-card" data-zone="West Kolhapur">
+              <div class="zcard-icon">⛵</div>
+              <div class="zcard-content">
+                <div class="zcard-title">West Kolhapur</div>
+                <div class="zcard-areas">Rankala &bull; Phulewadi side</div>
+              </div>
+              <span class="zcard-badge">Ward Officer</span>
+            </div>
+
+            <div class="zone-select-card zcard-admin" data-zone="all">
+              <div class="zcard-icon">🌐</div>
+              <div class="zcard-content">
+                <div class="zcard-title">Citywide / All Kolhapur</div>
+                <div class="zcard-areas">All 5 Kolhapur Zones &bull; Full City Overview</div>
+              </div>
+              <span class="zcard-badge badge-admin">Chief Engineer</span>
+            </div>
+          </div>
+
+          <!-- Quick Login Form Box -->
+          <div class="login-form-box">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="login-officer-name">Officer Name / ID</label>
+                <input type="text" id="login-officer-name" value="Ward Officer (KMC)" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="login-zone-dropdown">Target Jurisdiction Zone</label>
+                <select id="login-zone-dropdown" class="form-input">
+                  <option value="Central Kolhapur">Central Kolhapur (Shahupuri, Laxmipuri, Rajarampuri)</option>
+                  <option value="North Kolhapur">North Kolhapur (Ujalaiwadi, Kasaba Bawada side)</option>
+                  <option value="South Kolhapur">South Kolhapur (Kalamba, Morewadi side)</option>
+                  <option value="East Kolhapur">East Kolhapur (Uchgaon, Gokul Shirgaon side)</option>
+                  <option value="West Kolhapur">West Kolhapur (Rankala, Phulewadi side)</option>
+                  <option value="all">Chief Municipal Engineer (All Kolhapur City)</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-confirm-login">Enter Kolhapur Triage Portal &rarr;</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Dashcam Patrol & Edge AI Stream Modal HUD -->
+    <div class="modal-overlay" id="patrol-modal" style="display: none;">
+      <div class="modal-card patrol-modal-card">
+        <div class="modal-header patrol-modal-header">
+          <div class="patrol-header-left">
+            <div class="patrol-live-indicator"><span class="patrol-dot pulse"></span> LIVE HUD</div>
+            <div>
+              <h3 class="modal-title">Autonomous Road Distress Patrol</h3>
+              <p class="modal-subtitle" id="patrol-header-route">Unit: KMC-PATROL-04 &bull; Station Road &rarr; Rajarampuri Survey</p>
+            </div>
+          </div>
+          <div class="patrol-header-stats">
+            <div class="pstat-item"><span class="pstat-label">EDGE FPS</span><span class="pstat-value" id="patrol-fps">28.4</span></div>
+            <div class="pstat-item"><span class="pstat-label">SPEED</span><span class="pstat-value" id="patrol-speed">36 km/h</span></div>
+            <div class="pstat-item"><span class="pstat-label">DETECTIONS</span><span class="pstat-value pstat-highlight" id="patrol-detected-count">0</span></div>
+          </div>
+          <button class="modal-close" id="btn-close-patrol">&times;</button>
+        </div>
+
+        <div class="patrol-body-grid">
+          <!-- Video & Canvas Player Stage -->
+          <div class="patrol-video-stage">
+            <div class="patrol-screen-wrap" id="patrol-screen-wrap">
+              <video id="patrol-video-element" playsinline muted preload="auto"></video>
+              <canvas id="patrol-overlay-canvas"></canvas>
+              
+              <!-- Automotive HUD Overlays -->
+              <div class="hud-corner hud-tl">CAM-01 [FORWARD ROAD ANGLE]</div>
+              <div class="hud-corner hud-tr" id="hud-timestamp">00:00:00</div>
+              <div class="hud-corner hud-bl" id="hud-location">GPS: 16.7042° N, 74.2395° E</div>
+              <div class="hud-corner hud-br" id="hud-status">STATUS: STANDBY</div>
+              <div class="hud-crosshair"></div>
+
+              <!-- Hazard Alert Banner -->
+              <div class="hud-hazard-alert" id="hud-hazard-alert" style="display: none;">
+                <span class="alert-icon">⚠️</span>
+                <span id="hud-hazard-text">HIGH RISK POTHOLE DETECTED</span>
+              </div>
+            </div>
+
+            <!-- Video & Patrol Control Bar -->
+            <div class="patrol-control-bar">
+              <div class="patrol-ctrl-left">
+                <button class="btn btn-primary" id="btn-patrol-play">▶ Start Live Patrol</button>
+                <button class="btn btn-secondary" id="btn-patrol-pause" disabled>⏸ Pause</button>
+                <button class="btn btn-secondary" id="btn-patrol-reset">⏹ Reset</button>
+              </div>
+
+              <div class="patrol-ctrl-center">
+                <span class="patrol-time" id="patrol-time-display">00:00 / 00:31</span>
+                <input type="range" id="patrol-progress" min="0" max="31" step="0.1" value="0" class="patrol-slider">
+              </div>
+
+              <div class="patrol-ctrl-right">
+                <label class="btn btn-secondary" id="label-upload-video" title="Upload Custom Dashcam MP4/AVI Video">
+                  📁 Custom Video
+                  <input type="file" id="input-upload-video" accept="video/*" style="display: none;">
+                </label>
+                <button class="btn btn-secondary" id="btn-webcam-toggle" title="Stream live from PC camera">📷 WebCam</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Event Log & Dispatch Sidebar -->
+          <div class="patrol-event-sidebar">
+            <div class="pevent-header">
+              <span class="pevent-title">Real-Time Detections Feed</span>
+              <span class="badge badge-success" id="patrol-stream-status">Telemetry Active</span>
+            </div>
+            <div class="pevent-list" id="patrol-event-list">
+              <div class="pevent-empty" id="patrol-empty-state">
+                <p>Start patrol to begin streaming road distress detections onto Google Maps in real time.</p>
+              </div>
+            </div>
+            <div class="pevent-footer">
+              <button class="btn btn-secondary btn-block" id="btn-sync-map-focus">📍 Track Vehicle on Google Map</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Camera Pairing Modal -->
+    <div class="modal-overlay" id="mobile-pair-modal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999;">
+      <div class="modal-card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 24px; max-width: 440px; width: 90%; box-shadow: var(--shadow-lg); text-align: center; position: relative;">
+        <button class="modal-close" id="btn-close-mobile-modal" style="position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+        <div style="font-size: 36px; margin-bottom: 8px;">📱</div>
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Live Mobile Camera Patrol</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;">Scan with your Android or iPhone camera to stream real-time road distress directly to this municipal dashboard.</p>
+        
+        <div style="background: #ffffff; padding: 14px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 16px;">
+          <img id="mobile-qr-img" src="" alt="Scan QR Code to Launch Mobile HUD" style="width: 170px; height: 170px; display: block; margin: 0 auto; border-radius: 6px;">
+        </div>
+
+        <div style="background: var(--bg-surface-elevated); padding: 10px 14px; border-radius: 8px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--brand-primary); margin-bottom: 16px; word-break: break-all; border: 1px dashed var(--border-subtle);" id="mobile-hud-url-text">
+          Loading network URL...
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <a id="btn-open-mobile-tab" href="/mobile.html" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; padding: 8px 16px;">
+            <span>💻 Open on Laptop Webcam</span>
+          </a>
+          <button id="btn-copy-mobile-url" class="btn btn-secondary" style="font-size: 0.82rem; padding: 8px 14px;">
+            📋 Copy URL
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="toast-notification"></div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>

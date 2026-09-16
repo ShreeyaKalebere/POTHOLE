@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RoadCare AI - Mobile Patrol HUD</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+    }
+
+    #view-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #camera-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #hud-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Top HUD Bar */
+    .hud-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.85) 0%, rgba(11, 15, 25, 0) 100%);
+      z-index: 10;
+    }
+
+    .badge-live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .hud-metrics {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #38bdf8;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Hazard Alert Banner */
+    #hazard-banner {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(220, 38, 38, 0.9);
+      border: 1px solid #f87171;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      display: none;
+      z-index: 10;
+      animation: flash 0.8s infinite alternate;
+    }
+
+    @keyframes flash {
+      from { opacity: 0.8; transform: translateX(-50%) scale(0.98); }
+      to { opacity: 1; transform: translateX(-50%) scale(1.02); }
+    }
+
+    #report-banner {
+      position: absolute;
+      top: 105px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(16, 185, 129, 0.95);
+      border: 1px solid #34d399;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      display: none;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    /* Bottom HUD Bar */
+    .hud-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 16px 20px;
+      background: linear-gradient(0deg, rgba(11, 15, 25, 0.95) 0%, rgba(11, 15, 25, 0) 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #94a3b8;
+      font-family: monospace;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .controls-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-action {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #f1f5f9;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-action:active {
+      transform: scale(0.96);
+      background: rgba(51, 65, 85, 0.95);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      border: 1px solid #60a5fa;
+      color: white;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    /* Permission Help Modal */
+    #permission-modal {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(12px);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+      z-index: 50;
+    }
+
+    .modal-card {
+      background: #1e293b;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-card h3 {
+      font-size: 17px;
+      margin-bottom: 10px;
+      color: #f8fafc;
+    }
+
+    .modal-card p {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .modal-card code {
+      display: block;
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      word-break: break-all;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="view-container">
+    <video id="camera-video" autoplay playsinline muted></video>
+    <canvas id="hud-canvas"></canvas>
+
+    <!-- Top HUD Header -->
+    <div class="hud-header">
+      <div class="badge-live">
+        <span class="pulse-dot"></span>
+        <span id="patrol-status">PATROL ACTIVE</span>
+      </div>
+      <div class="hud-metrics">
+        <span id="fps-display">-- FPS</span>
+        <span>|</span>
+        <span id="latency-display">-- ms</span>
+      </div>
+    </div>
+
+    <!-- Real-time Alerts -->
+    <div id="hazard-banner">⚠️ HAZARD DETECTED: HIGH SEVERITY</div>
+    <div id="report-banner">✅ Auto-reported to Municipal DB</div>
+
+    <!-- Bottom HUD Telemetry -->
+    <div class="hud-bottom">
+      <div class="telemetry-row">
+        <span id="gps-display">📍 GPS: Acquired</span>
+        <span id="defects-stat">Distress: 0 detected</span>
+      </div>
+      <div class="controls-row">
+        <button id="btn-toggle-scan" class="btn-action btn-primary">
+          <span id="scan-icon">⏸</span> <span id="scan-label">Pause</span>
+        </button>
+        <button id="btn-switch-cam" class="btn-action">
+          🔄 Flip Camera
+        </button>
+        <button id="btn-sound" class="btn-action">
+          🔊 Sound: ON
+        </button>
+      </div>
+    </div>
+
+    <!-- Permission/Security Fallback Modal -->
+    <div id="permission-modal">
+      <div class="modal-card">
+        <h3>Camera Access Notice</h3>
+        <p>Mobile Chrome requires HTTPS or localhost to access the rear camera over Wi-Fi.</p>
+        <p>To enable on Android Chrome, visit:</p>
+        <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>
+        <p>Add <strong id="origin-url">http://...</strong> and click Enable & Relaunch.</p>
+        <button id="btn-test-mode" class="btn-action btn-primary" style="width: 100%; justify-content: center;">
+          📷 Upload Test Frame Instead
+        </button>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // System & Telemetry State
+    let isScanning = true;
+    let soundEnabled = true;
+    let currentFacingMode = "environment"; // Rear camera
+    let currentStream = null;
+    let ws = null;
+    let detectionCount = 0;
+    let gpsCoords = { latitude: 16.7050, longitude: 74.2433 };
+    let audioCtx = null;
+
+    const video = document.getElementById('camera-video');
+    const canvas = document.getElementById('hud-canvas');
+    const ctx = canvas.getContext('2d');
+    const fpsDisplay = document.getElementById('fps-display');
+    const latencyDisplay = document.getElementById('latency-display');
+    const hazardBanner = document.getElementById('hazard-banner');
+    const reportBanner = document.getElementById('report-banner');
+    const gpsDisplay = document.getElementById('gps-display');
+    const defectsStat = document.getElementById('defects-stat');
+    const patrolStatus = document.getElementById('patrol-status');
+    const btnToggleScan = document.getElementById('btn-toggle-scan');
+    const btnSwitchCam = document.getElementById('btn-switch-cam');
+    const btnSound = document.getElementById('btn-sound');
+    const scanLabel = document.getElementById('scan-label');
+    const scanIcon = document.getElementById('scan-icon');
+    const permissionModal = document.getElementById('permission-modal');
+    const originUrlElem = document.getElementById('origin-url');
+    const btnTestMode = document.getElementById('btn-test-mode');
+    const fileInput = document.getElementById('file-input');
+
+    originUrlElem.textContent = window.location.origin;
+
+    // Web Audio alert synthesizer
+    function playBeep(frequency = 880, duration = 0.15) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn("Audio error:", e);
+      }
+    }
+
+    // Hardware GPS Tracking
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        pos => {
+          gpsCoords.latitude = Number(pos.coords.latitude.toFixed(5));
+          gpsCoords.longitude = Number(pos.coords.longitude.toFixed(5));
+          gpsDisplay.textContent = `📍 GPS: ${gpsCoords.latitude}° N, ${gpsCoords.longitude}° E`;
+          sendTelemetry();
+        },
+        err => {
+          console.warn("GPS acquire error:", err);
+          gpsDisplay.textContent = `📍 GPS: Simulation (${gpsCoords.latitude}, ${gpsCoords.longitude})`;
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    }
+
+    // Initialize Camera Feed
+    async function initCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      
+      const constraints = {
+        video: {
+          facingMode: currentFacingMode,
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      };
+
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = currentStream;
+        await video.play();
+        permissionModal.style.display = 'none';
+
+        video.onloadedmetadata = () => {
+          resizeCanvas();
+        };
+      } catch (err) {
+        console.warn("Camera error:", err);
+        permissionModal.style.display = 'flex';
+      }
+    }
+
+    function resizeCanvas() {
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // WebSocket Stream Connection
+    function connectWebSocket() {
+      const loc = window.location;
+      const wsProto = loc.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${wsProto}//${loc.host}/ws/live_patrol`;
+
+      ws = new WebSocket(wsUrl);
+      ws.binaryType = "arraybuffer";
+
+      ws.onopen = () => {
+        patrolStatus.textContent = "PATROL ACTIVE";
+        sendTelemetry();
+      };
+
+      ws.onclose = () => {
+        patrolStatus.textContent = "RECONNECTING...";
+        setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const res = JSON.parse(event.data);
+          handleDetectionResults(res);
+        } catch (e) {
+          console.error("Failed to parse response:", e);
+        }
+      };
+    }
+
+    function sendTelemetry() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: "telemetry",
+          gps: gpsCoords,
+          zone: "Central Kolhapur",
+          vehicle_id: "MOBILE-PATROL-1"
+        }));
+      }
+    }
+
+    // Frame Grabber and Transmitter Loop
+    const captureCanvas = document.createElement('canvas');
+    const captureCtx = captureCanvas.getContext('2d');
+    let isProcessing = false;
+
+    setInterval(() => {
+      if (!isScanning || !ws || ws.readyState !== WebSocket.OPEN || isProcessing) return;
+      if (!video.videoWidth || !video.videoHeight) return;
+
+      isProcessing = true;
+      captureCanvas.width = 640;
+      captureCanvas.height = 480;
+      captureCtx.drawImage(video, 0, 0, 640, 480);
+
+      captureCanvas.toBlob(blob => {
+        if (blob && ws && ws.readyState === WebSocket.OPEN) {
+          blob.arrayBuffer().then(buffer => {
+            ws.send(buffer);
+            isProcessing = false;
+          }).catch(() => { isProcessing = false; });
+        } else {
+          isProcessing = false;
+        }
+      }, 'image/jpeg', 0.65);
+    }, 120); // ~8 FPS stream over Wi-Fi for low latency and minimal bandwidth
+
+    // Render Bounding Boxes & HUD Alerts
+    function handleDetectionResults(res) {
+      if (!res) return;
+
+      fpsDisplay.textContent = `${res.fps || '--'} FPS`;
+      latencyDisplay.textContent = `${res.latency_ms || '--'} ms`;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const detections = res.detections || [];
+      if (detections.length > 0) {
+        detectionCount += detections.length;
+        defectsStat.textContent = `Distress: ${detectionCount} detected`;
+
+        // Hazard Banner
+        if (res.highest_severity === "High") {
+          hazardBanner.style.display = "block";
+          hazardBanner.textContent = `⚠️ SEVERE HAZARD: ${detections[0].class_name.toUpperCase()}`;
+          playBeep(880, 0.2);
+        } else if (res.highest_severity === "Medium") {
+          hazardBanner.style.display = "block";
+          hazardBanner.textContent = `⚠️ DISTRESS: ${detections[0].class_name.toUpperCase()}`;
+          playBeep(650, 0.1);
+        } else {
+          hazardBanner.style.display = "none";
+        }
+
+        // Draw Bounding Boxes
+        detections.forEach(det => {
+          const norm = det.box_norm;
+          if (!norm) return;
+
+          const x = norm[0] * canvas.width;
+          const y = norm[1] * canvas.height;
+          const w = (norm[2] - norm[0]) * canvas.width;
+          const h = (norm[3] - norm[1]) * canvas.height;
+
+          // Box Colors based on severity
+          let strokeColor = "#38bdf8"; // Low (Blue)
+          if (det.severity === "Medium") strokeColor = "#fbbf24"; // Yellow
+          if (det.severity === "High") strokeColor = "#ef4444"; // Red
+
+          // Outer Glow
+          ctx.shadowColor = strokeColor;
+          ctx.shadowBlur = 10;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x, y, w, h);
+          ctx.shadowBlur = 0;
+
+          // Corner Brackets for Tactical HUD Look
+          const len = Math.min(w, h) * 0.25;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          // Top-Left
+          ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y);
+          // Top-Right
+          ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len);
+          // Bottom-Left
+          ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h);
+          // Bottom-Right
+          ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len);
+          ctx.stroke();
+
+          // Label Pill
+          const labelText = `${det.class_name.toUpperCase()} ${(det.confidence * 100).toFixed(0)}% [${det.severity}]`;
+          ctx.font = "bold 13px -apple-system, sans-serif";
+          const textMetrics = ctx.measureText(labelText);
+          const pillWidth = textMetrics.width + 12;
+          const pillHeight = 22;
+          const pillY = y > pillHeight + 5 ? y - pillHeight - 4 : y + 4;
+
+          ctx.fillStyle = strokeColor;
+          ctx.beginPath();
+          ctx.roundRect(x, pillY, pillWidth, pillHeight, 4);
+          ctx.fill();
+
+          ctx.fillStyle = "#000000";
+          ctx.fillText(labelText, x + 6, pillY + 15);
+        });
+      } else {
+        hazardBanner.style.display = "none";
+      }
+
+      // Reported Banner Feedback
+      if (res.recorded_defect_id) {
+        reportBanner.style.display = "block";
+        reportBanner.textContent = `✅ REPORTED TO MUNICIPALITY: #${res.recorded_defect_id}`;
+        playBeep(1100, 0.3);
+        setTimeout(() => { reportBanner.style.display = "none"; }, 3500);
+      }
+    }
+
+    // Controls
+    btnToggleScan.addEventListener('click', () => {
+      isScanning = !isScanning;
+      scanLabel.textContent = isScanning ? "Pause" : "Resume";
+      scanIcon.textContent = isScanning ? "⏸" : "▶";
+      btnToggleScan.className = isScanning ? "btn-action btn-primary" : "btn-action";
+      patrolStatus.textContent = isScanning ? "PATROL ACTIVE" : "PATROL PAUSED";
+      if (!isScanning) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hazardBanner.style.display = "none";
+      }
+    });
+
+    btnSwitchCam.addEventListener('click', () => {
+      currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+      initCamera();
+    });
+
+    btnSound.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      btnSound.textContent = soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+      if (soundEnabled) playBeep(880, 0.1);
+    });
+
+    // Fallback Image Mode
+    btnTestMode.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          permissionModal.style.display = 'none';
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          // Send to backend
+          fetch(reader.result)
+            .then(res => res.blob())
+            .then(blob => blob.arrayBuffer())
+            .then(buffer => {
+              if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(buffer);
+              }
+            });
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Start Everything
+    window.addEventListener('load', () => {
+      initCamera();
+      connectWebSocket();
+    });
+  </script>
+</body>
+</html>

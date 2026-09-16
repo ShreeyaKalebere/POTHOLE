@@ -1,0 +1,8 @@
+path: /content/dataset/RoadDamage20K
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: pothole
+  1: alligator_crack

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Presentation: Road Damage & Municipal Reporting System</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-slide: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #4f46e5;
+      --primary-light: #e0e7ff;
+      --accent: #0284c7;
+      --hazard: #dc2626;
+      --warning: #d97706;
+      --success: #059669;
+      --border: #e2e8f0;
+      --font: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background-color: #0b0f19;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Presentation Frame */
+    .deck-viewport {
+      width: 1200px;
+      height: 675px; /* 16:9 Aspect Ratio */
+      background: var(--bg-slide);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Slide Navigation Bar */
+    .slide-navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-project-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .nav-slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* Slides Container */
+    .slides-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      padding: 2.5rem 3.5rem;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Typography */
+    .slide-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+    .slide-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--text-main);
+      margin-bottom: 1.5rem;
+    }
+    .slide-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      line-height: 1.6;
+    }
+
+    /* Slide Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    /* Cards */
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+    .card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.4rem;
+    }
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Metric Display */
+    .metric-hero {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+      font-family: var(--font-mono);
+    }
+    .metric-caption {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Footer Controls */
+    .deck-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 2rem;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+    }
+    .controls-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .nav-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-slide {
+      background: var(--bg-slide);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-slide:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Title Slide Specific */
+    .title-slide {
+      text-align: center;
+      align-items: center;
+    }
+    .title-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      margin-bottom: 1.5rem;
+    }
+    .author-meta {
+      margin-top: 2rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    /* Badges */
+    .pill {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pill-hazard { background: rgba(220, 38, 38, 0.12); color: var(--hazard); }
+    .pill-warning { background: rgba(217, 119, 6, 0.12); color: var(--warning); }
+    .pill-success { background: rgba(5, 150, 105, 0.12); color: var(--success); }
+
+    /* Code Snippet */
+    .code-box {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="deck-viewport">
+    
+    <!-- Top Header Bar -->
+    <div class="slide-navbar">
+      <div class="nav-project-title">RoadCare AI &bull; Final Year Project Defense</div>
+      <div class="nav-slide-counter" id="slide-counter">1 / 11</div>
+    </div>
+
+    <!-- Slide Stage -->
+    <div class="slides-wrapper">
+
+      <!-- Slide 1: Title -->
+      <div class="slide active title-slide">
+        <div class="title-badge">Computer Vision &amp; Deep Learning Thesis</div>
+        <h1 class="slide-title" style="font-size: 2.5rem; max-width: 950px;">
+          Computer Vision and Deep Learning Based Road Damage &amp; Municipal Reporting System
+        </h1>
+        <p class="slide-subtitle">
+          Real-Time Edge Vehicle Dashcam Perception, ByteTrack Multi-Object Tracking &amp; Civic Geospatial Triage
+        </p>
+        <div class="author-meta">
+          <strong>Core Technologies:</strong> YOLO11 &bull; ByteTrack &bull; OpenCV &bull; FastAPI &bull; SQLite/MongoDB &bull; Leaflet.js
+        </div>
+      </div>
+
+      <!-- Slide 2: Problem & Motivation -->
+      <div class="slide">
+        <div class="slide-tag">Problem Statement</div>
+        <h2 class="slide-title">The Civic Challenge: Road Distress &amp; Ineffective Triage</h2>
+        <div class="grid-3">
+          <div class="info-card">
+            <div class="card-icon">🌧️</div>
+            <div class="card-title">Severe Monsoon Degradation</div>
+            <p class="card-desc">Water infiltration and heavy commercial axle loads cause rapid crater formation and structural fatigue mesh cracking.</p>
+          </div>
+          <div class="info-card">
+            <div class="card-icon">💸</div>
+            <div class="card-title">Manual &amp; Costly Surveys</div>
+            <p class="card-desc">Traditional road profiling vans with laser profilers cost over $150,000. Manual foot patrols are slow, subjective, and prone to corruption.</p>
+          </div>
+          <div class="info-card">
+            <div class="card-icon">⏱️</div>
+            <div class="card-title">Reporting Latency &amp; Hazards</div>
+            <p class="card-desc">Citizen grievances take weeks to reach road maintenance engineers, leading to severe vehicle damage and tragic fatal accidents.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: End-to-End System Architecture -->
+      <div class="slide">
+        <div class="slide-tag">System Design</div>
+        <h2 class="slide-title">End-to-End Three-Tier Architecture</h2>
+        <div class="grid-3">
+          <div class="info-card" style="border-top: 4px solid var(--primary);">
+            <div class="card-title">1. Edge Perception Tier</div>
+            <p class="card-desc">
+              &bull; <strong>OpenCV Stream:</strong> 30 FPS video capture<br>
+              &bull; <strong>YOLO11 Detector:</strong> Pothole &amp; Alligator Crack<br>
+              &bull; <strong>ByteTrack:</strong> Persistent tracking IDs<br>
+              &bull; <strong>Severity Metric:</strong> Area-based heuristic
+            </p>
+          </div>
+          <div class="info-card" style="border-top: 4px solid var(--accent);">
+            <div class="card-title">2. Ingestion &amp; Storage Tier</div>
+            <p class="card-desc">
+              &bull; <strong>FastAPI Service:</strong> RESTful async ingestion<br>
+              &bull; <strong>Dual-Engine DB:</strong> MongoDB + SQLite fallback<br>
+              &bull; <strong>GeoJSON Engine:</strong> Standard GIS coordinates<br>
+              &bull; <strong>Triage Engine:</strong> Real-time municipal KPIs
+            </p>
+          </div>
+          <div class="info-card" style="border-top: 4px solid var(--success);">
+            <div class="card-title">3. Civic Dashboard Tier</div>
+            <p class="card-desc">
+              &bull; <strong>RoadCare AI UI:</strong> Modern Light/Dark design<br>
+              &bull; <strong>Leaflet Map:</strong> Geographic defect hotspots<br>
+              &bull; <strong>Triage Worklist:</strong> Priority sorting<br>
+              &bull; <strong>Contractor Dispatch:</strong> Field work orders
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Dataset Engineering & Leakage Prevention -->
+      <div class="slide">
+        <div class="slide-tag">Data Engineering</div>
+        <h2 class="slide-title">RoadDamage20K: 10,389 Verified Images</h2>
+        <div class="grid-2">
+          <div class="info-card">
+            <div class="card-title">Strict Canonical 2-Class Taxonomy</div>
+            <p class="card-desc" style="margin-bottom: 0.8rem;">Eliminated irrelevant classes (manholes, markings, longitudinal lines) to focus exclusively on critical road damage:</p>
+            <p><strong>Class 0 (Pothole):</strong> 6,233 Bounding Boxes</p>
+            <p><strong>Class 1 (Alligator Crack):</strong> 8,358 Bounding Boxes</p>
+            <p><strong>Indian Road Focus:</strong> 4,092 Images (39.4% anchor)</p>
+            <p><strong>Difficult Negatives:</strong> 1,598 Frames (Normal roads)</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">Zero Video Frame Leakage Defense</div>
+            <p class="card-desc" style="margin-bottom: 0.8rem;">Random splitting causes consecutive frames to bleed between train and test, inflating accuracy falsely.</p>
+            <div class="code-box">
+              Sequence Group Clustering:<br>
+              &bull; Train: 7,270 images (70%)<br>
+              &bull; Val:   1,558 images (15%)<br>
+              &bull; Test:  1,561 images (15% held-out)
+            </div>
+            <p class="card-desc" style="margin-top: 0.5rem;">Removed 89 duplicates via SHA-256 and pHash.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: Deep Learning Model: YOLO11 -->
+      <div class="slide">
+        <div class="slide-tag">Deep Learning Core</div>
+        <h2 class="slide-title">Ultralytics YOLO11 Model Innovation</h2>
+        <div class="grid-3">
+          <div class="info-card">
+            <div class="card-title">C3k2 Backbone</div>
+            <p class="card-desc">Cross Stage Partial blocks with customizable kernel sizes, significantly reducing parameter count and FLOPs while preserving deep gradient flow.</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">SPPF Multi-Scale Neck</div>
+            <p class="card-desc">Spatial Pyramid Pooling Fast captures small, distant potholes (scale 5x5) alongside broad interconnected pavement fatigue networks (scale 13x13).</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">Anchor-Free Decoupled Head</div>
+            <p class="card-desc">Separates classification and coordinate regression. Employs Complete IoU (CIoU) Loss and Distribution Focal Loss (DFL) for sub-pixel boundary accuracy.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: Multi-Object Tracking (ByteTrack) -->
+      <div class="slide">
+        <div class="slide-tag">Downstream Tracking</div>
+        <h2 class="slide-title">ByteTrack: Eliminating Duplicate Reports</h2>
+        <div class="grid-2">
+          <div class="info-card">
+            <div class="card-title">The "Infinite Counting" Defect</div>
+            <p class="card-desc">When a vehicle drives over a single pothole at 30 km/h, the detector sees it across 30 consecutive video frames.</p>
+            <p class="card-desc" style="margin-top: 0.5rem; color: var(--hazard); font-weight: 700;">Without tracking: 1 pothole = 30 separate municipal reports!</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">ByteTrack Two-Stage Association</div>
+            <p class="card-desc">1. Associates high-confidence boxes ($conf \ge 0.5$) using Kalman Filter predictions.</p>
+            <p class="card-desc">2. Retains <em>low-confidence</em> boxes ($0.1 \le conf < 0.5$) to recover motion-blurred potholes without spawning new duplicate IDs.</p>
+            <p class="card-desc" style="margin-top: 0.5rem; color: var(--success); font-weight: 700;">Result: Every defect receives exactly ONE persistent tracking ID.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 7: Automated Severity Estimation -->
+      <div class="slide">
+        <div class="slide-tag">Heuristic Formulation</div>
+        <h2 class="slide-title">Area-Based Severity Decision Boundaries</h2>
+        <div class="grid-2">
+          <div class="info-card">
+            <div class="card-title">Pothole Severity (Class 0)</div>
+            <p class="card-desc" style="margin-bottom: 0.6rem;">Derived from normalized bounding-box area $A_{norm} = w_{norm} \times h_{norm}$:</p>
+            <p><span class="pill pill-success">Low Severity</span> Area &lt; 2% &bull; Minor surface spalling (&lt; 15 cm)</p>
+            <p style="margin-top: 0.4rem;"><span class="pill pill-warning">Medium Severity</span> Area 2% - 6% &bull; Crater 15 - 40 cm (48h patch)</p>
+            <p style="margin-top: 0.4rem;"><span class="pill pill-hazard">High Severity</span> Area &ge; 6% &bull; Critical crater &gt; 40 cm (Emergency)</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">Alligator Crack Severity (Class 1)</div>
+            <p class="card-desc" style="margin-bottom: 0.6rem;">Calibrated for extensive fatigue mesh:</p>
+            <p><span class="pill pill-success">Low Severity</span> Area &lt; 4% &bull; Hairline crack network (Slurry seal)</p>
+            <p style="margin-top: 0.4rem;"><span class="pill pill-warning">Medium Severity</span> Area 4% - 10% &bull; Interconnected lane mesh</p>
+            <p style="margin-top: 0.4rem;"><span class="pill pill-hazard">High Severity</span> Area &ge; 10% &bull; Base failure (Mill-and-pave)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 8: Backend & RoadCare AI Dashboard -->
+      <div class="slide">
+        <div class="slide-tag">Municipal Platform</div>
+        <h2 class="slide-title">FastAPI Backend &amp; Civic Web Dashboard</h2>
+        <div class="grid-3">
+          <div class="info-card">
+            <div class="card-title">Dual-Engine Storage</div>
+            <p class="card-desc">Zero-config SQLite fallback for offline demonstrations; automatic MongoDB Atlas connection for enterprise city deployments with geospatial queries.</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">Interactive Geospatial Map</div>
+            <p class="card-desc">Leaflet-powered dark &amp; light tile sets with severity-coded pins, auto-centering, and animated camera fly-to on card selection.</p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">Contractor Dispatch Modal</div>
+            <p class="card-desc">Field engineers inspect simulated dashcam frames with bounding boxes, assign repair contractors, log notes, and export municipal reports.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 9: Regional Deployment: Kolhapur Municipal Corporation -->
+      <div class="slide">
+        <div class="slide-tag">Regional Case Study</div>
+        <h2 class="slide-title">Kolhapur Municipal Corporation: 5-Zone Administrative Partitioning</h2>
+        <div class="grid-3">
+          <div class="info-card">
+            <div class="card-title">1. Central &amp; North Kolhapur</div>
+            <p class="card-desc">
+              &bull; <strong>Central (Shahupuri, Laxmipuri):</strong> High commercial traffic, market corridors, intense vehicle braking.<br>
+              &bull; <strong>North (Ujalaiwadi, Kasaba Bawada):</strong> Panchganga river basin, monsoon waterlogging &amp; silt wash.
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">2. South &amp; East Kolhapur</div>
+            <p class="card-desc">
+              &bull; <strong>South (Kalamba, Morewadi):</strong> Rapid residential development, pipeline trenching &amp; sub-base settling.<br>
+              &bull; <strong>East (Uchgaon, Gokul Shirgaon):</strong> MIDC industrial highway corridor, heavy multi-axle freight wear.
+            </p>
+          </div>
+          <div class="info-card">
+            <div class="card-title">3. West &amp; Citywide Admin</div>
+            <p class="card-desc">
+              &bull; <strong>West (Rankala, Phulewadi):</strong> Tourist bus transit, lake embankment moisture seepage.<br>
+              &bull; <strong>Citywide (Chief Engineer):</strong> Unified municipal command, cross-ward contractor dispatch &amp; budget allocation.
+            </p>
+          </div>
+        </div>
+        <div class="info-card" style="margin-top: 1rem; border-left: 4px solid var(--primary); padding: 0.8rem 1.2rem;">
+          <p class="card-desc" style="font-size: 0.85rem; color: var(--text-main);">
+            <strong>Ward Officer Authentication Workflow:</strong> When an engineer authenticates (e.g. <em>Ward Officer - West Kolhapur</em>), the Leaflet GIS map automatically pans to coordinates [16.6920&deg; N, 74.2050&deg; E], scopes municipal KPI cards, and isolates distress records strictly within that administrative jurisdiction.
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 10: Results & Hardware Benchmarks -->
+      <div class="slide">
+        <div class="slide-tag">Experimental Evaluation</div>
+        <h2 class="slide-title">Performance &amp; Hardware Benchmarks</h2>
+        <div class="grid-3">
+          <div class="info-card" style="text-align: center;">
+            <div class="metric-hero">162</div>
+            <div class="metric-caption">FPS on NVIDIA T4 GPU</div>
+            <p class="card-desc" style="margin-top: 0.5rem;">Latency: 6.2 ms per frame</p>
+          </div>
+          <div class="info-card" style="text-align: center;">
+            <div class="metric-hero">33</div>
+            <div class="metric-caption">FPS on Intel Core i7 CPU</div>
+            <p class="card-desc" style="margin-top: 0.5rem;">Real-time threshold (&gt;30 FPS) achieved</p>
+          </div>
+          <div class="info-card" style="text-align: center;">
+            <div class="metric-hero">0.68</div>
+            <div class="metric-caption">Target mAP50 on Test Split</div>
+            <p class="card-desc" style="margin-top: 0.5rem;">Zero-leakage verified evaluation</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 10: Conclusion & Q&A -->
+      <div class="slide title-slide">
+        <div class="title-badge" style="background: rgba(5, 150, 105, 0.12); color: var(--success);">Project Ready for Viva Defense</div>
+        <h2 class="slide-title" style="font-size: 2.3rem;">Summary &amp; Open Discussion</h2>
+        <p class="slide-subtitle" style="text-align: center;">
+          Delivered a leak-free, verified 10,389-image dataset, trained YOLO11 architecture, ByteTrack de-duplication, dual-engine FastAPI backend, and an interactive municipal web reporting dashboard.
+        </p>
+        <div class="author-meta" style="margin-top: 1.5rem;">
+          <strong>Thank you! Ready for Questions.</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Navigation Footer -->
+    <div class="deck-footer">
+      <div class="controls-hint">Use <strong>Arrow Keys</strong> or <strong>Spacebar</strong> to navigate &bull; Press <strong>F11</strong> for Fullscreen</div>
+      <div class="nav-buttons">
+        <button class="btn-slide" id="btn-prev">&larr; Previous</button>
+        <button class="btn-slide" id="btn-next">Next &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function () {
+      const slides = document.querySelectorAll('.slide');
+      const counter = document.getElementById('slide-counter');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      let currentIdx = 0;
+
+      function updateSlide(idx) {
+        if (idx < 0) idx = 0;
+        if (idx >= slides.length) idx = slides.length - 1;
+        currentIdx = idx;
+
+        slides.forEach((s, i) => {
+          s.classList.toggle('active', i === currentIdx);
+        });
+        counter.textContent = `${currentIdx + 1} / ${slides.length}`;
+      }
+
+      btnPrev.addEventListener('click', () => updateSlide(currentIdx - 1));
+      btnNext.addEventListener('click', () => updateSlide(currentIdx + 1));
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          updateSlide(currentIdx + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          updateSlide(currentIdx - 1);
+        } else if (e.key === 'Home') {
+          updateSlide(0);
+        } else if (e.key === 'End') {
+          updateSlide(slides.length - 1);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

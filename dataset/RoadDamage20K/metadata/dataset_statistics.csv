@@ -1,0 +1,16 @@
+metric,value
+total_unique_images,10389
+train_images,7270
+validation_images,1558
+test_images,1561
+pothole_positive_images,3616
+alligator_crack_positive_images,6550
+mixed_images,1375
+negative_background_images,1598
+pothole_bounding_boxes,6150
+alligator_crack_bounding_boxes,8318
+india_specific_images,4092
+other_country_images,6297
+duplicates_removed,89
+corrupt_images_removed,0
+invalid_labels_filtered,1
