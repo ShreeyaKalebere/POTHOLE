@@ -1,0 +1,8 @@
+path: c:/Users/shree/Downloads/POTHOLE/RoadDamage_Fresh
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: pothole
+  1: alligator_crack

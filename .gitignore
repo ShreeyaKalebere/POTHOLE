@@ -26,6 +26,8 @@ dataset/RoadDamage20K/intermediate/
 dataset/RoadDamage20K/images/
 dataset/RoadDamage20K/labels/
 dataset/RoadDamage20K/qa/visual_samples/
+RoadDamage_Fresh/
+POTHOLEDATASET/
 *.cache
 
 # Database & SQLite files

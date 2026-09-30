@@ -30,9 +30,18 @@ def main():
         device = 0
 
     # 2. Check Data Config
-    data_yaml = os.path.abspath("dataset/RoadDamage20K/data.yaml")
-    if not os.path.exists(data_yaml):
-        print(f"[!] ERROR: Data config not found at: {data_yaml}")
+    candidates = [
+        os.path.abspath("RoadDamage_Fresh/data.yaml"),
+        os.path.abspath("dataset/RoadDamage_Fresh/data.yaml"),
+        "F:/RoadDamage_Fresh/data.yaml",
+    ]
+    data_yaml = None
+    for cand in candidates:
+        if os.path.exists(cand):
+            data_yaml = cand
+            break
+    if not data_yaml:
+        print(f"[!] ERROR: Data config not found in: {candidates}")
         sys.exit(1)
     print(f"[*] Dataset Config  : {data_yaml}")
 

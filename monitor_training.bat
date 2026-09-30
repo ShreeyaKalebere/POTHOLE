@@ -1,9 +1,15 @@
 @echo off
-title YOLO11 GPU Training — Live Monitor
+cd /d "%~dp0"
+title YOLO11 GPU Training - Live Epoch Monitor
+:loop
+cls
 echo ====================================================================
-echo  LIVE TRAINING MONITOR (NVIDIA GeForce RTX 4060)
-echo  Showing real-time training progress, batch speeds, and epoch losses.
-echo  (Press Ctrl+C at any time to exit the viewer; training continues)
+echo  YOLO11 FRESH TRAINING - LIVE EPOCH MONITOR
+echo  Dataset: RoadDamage_Fresh\data.yaml (100 Epochs Target)
+echo  Sync File: training_results.csv
 echo ====================================================================
-powershell -Command "Get-Content 'C:\Users\shree\.gemini\antigravity-ide\brain\4e43cee8-b97b-4981-921d-9d67c81d6717\.system_generated\tasks\task-758.log' -Wait -Tail 25"
-pause
+python view_training_results.py
+echo.
+echo Press 'R' and Enter to refresh immediately, or wait 30 seconds...
+timeout /t 30 >nul
+goto loop

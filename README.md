@@ -105,7 +105,8 @@ The dataset integrates verified vehicle-facing road imagery from **RDD2020** (CC
 ## 5. Quick Start Guide
 
 ### Step 1: Environment Setup
-Ensure Python 3.10+ is installed:
+Ensure Python 3.10+ is installed:.
+
 ```powershell
 pip install -r requirements.txt
 pip install -r backend/requirements.txt
