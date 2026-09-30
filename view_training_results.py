@@ -50,8 +50,16 @@ def sync_from_server_if_possible():
         pass # Offline or unreachable, continue with local file
 
 def find_results_csv():
+    # If explicitly passed via CLI
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        arg_p = Path(sys.argv[1])
+        if arg_p.exists():
+            return arg_p
+
     candidates = [
+        Path("training_results_100epochs.csv"),
         Path("training_results.csv"),
+        Path("runs/server_results/results.csv"),
         Path("runs/detect/road_damage_fresh/results.csv"),
         Path("runs/train/road_damage_fresh/results.csv"),
     ]
