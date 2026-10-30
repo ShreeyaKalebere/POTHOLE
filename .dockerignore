@@ -1,0 +1,16 @@
+# Only the app is sent to Docker - not the 19 GB of datasets and training runs.
+*
+!Dockerfile
+!deploy/requirements-cloud.txt
+!backend/**
+!dashboard/package.json
+!dashboard/package-lock.json
+!dashboard/index.html
+!dashboard/vite.config.js
+!dashboard/src/**
+!models/final.pt
+
+backend/media/**
+backend/models_cache/**
+backend/__pycache__/**
+**/__pycache__/**

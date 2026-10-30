@@ -1,0 +1,10 @@
+# Cloud (CPU-only) dependencies. torch/torchvision are installed separately from the
+# PyTorch CPU index in the Dockerfile, so the image does not download ~2 GB of CUDA libraries.
+fastapi==0.141.1
+uvicorn[standard]==0.40.0
+python-multipart>=0.0.9
+pymongo==4.18.1
+ultralytics==8.4.152
+opencv-python-headless==4.11.0.86
+pillow==11.2.1
+reportlab==5.0.1

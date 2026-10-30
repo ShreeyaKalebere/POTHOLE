@@ -1,0 +1,51 @@
+{
+  // Terminal > Run Task... (or Ctrl+Shift+B) -> "Start everything"
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend (FastAPI :8000)",
+      "type": "shell",
+      "command": "python -m uvicorn main:app --reload --port 8000 --host 0.0.0.0",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "group": "servers", "panel": "dedicated" }
+    },
+    {
+      "label": "Dashboard (React :5173)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/dashboard" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "group": "servers", "panel": "dedicated" }
+    },
+    {
+      "label": "Dashboard for PHONE (HTTPS :5173)",
+      "type": "shell",
+      "command": "npm run dev:phone",
+      "options": { "cwd": "${workspaceFolder}/dashboard" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "group": "servers", "panel": "dedicated" }
+    },
+    {
+      "label": "Start everything (phone / live patrol)",
+      "dependsOn": ["Backend (FastAPI :8000)", "Dashboard for PHONE (HTTPS :5173)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start everything",
+      "dependsOn": ["Backend (FastAPI :8000)", "Dashboard (React :5173)"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Training progress",
+      "type": "shell",
+      "command": "python -c \"import csv;r=list(csv.DictReader(open('runs/yolo11s_v1/results.csv')));[print(f\\\"epoch {int(float(x['epoch'])):3d}  P {float(x['metrics/precision(B)']):.3f}  R {float(x['metrics/recall(B)']):.3f}  mAP50 {float(x['metrics/mAP50(B)']):.3f}  mAP50-95 {float(x['metrics/mAP50-95(B)']):.3f}\\\") for x in r]\"",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

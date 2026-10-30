@@ -1,0 +1,25 @@
+{
+  "name": "road-damage-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev:phone": "vite --mode phone"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-leaflet": "4.2.1",
+    "react-router-dom": "6.28.0",
+    "recharts": "2.13.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "5.4.11"
+  }
+}

@@ -1,138 +1,135 @@
-from typing import List, Dict, Any, Optional
+"""Module 2 - wraps the trained YOLO11 model."""
+import os
+import shutil
+import threading
+import time
+import uuid
+import zipfile
 from pathlib import Path
+
 import cv2
-import numpy as np
-import torch
-from ultralytics import YOLO
 
-def find_best_model_weights(base_dir: Optional[Path] = None) -> str:
-    """Dynamically resolve the newest trained best.pt or fall back to yolo11n.pt."""
-    search_root = base_dir if base_dir else Path(__file__).resolve().parent.parent
-    
-    candidates = sorted(
-        list(search_root.glob("runs/**/weights/best.pt")) +
-        list(search_root.glob("runs/**/weights/last.pt")) +
-        list(search_root.glob("**/best.pt")),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True
-    )
-    if candidates:
-        return str(candidates[0])
-    
-    # Fallback default pretrained backbone
-    default_backbone = search_root / "yolo11n.pt"
-    if default_backbone.exists():
-        return str(default_backbone)
-    return "yolo11n.pt"
+from config import MODEL_CANDIDATES, CONF_THRESHOLD, CLASS_NAMES, BACKEND_DIR, INFER_DEVICE
+from severity import severity_score, severity_label
 
-def estimate_severity(class_name: str, box_norm_area: float) -> str:
-    """
-    Compute severity based on normalized bounding box surface area:
-    - Pothole:
-        * Low:    < 2%
-        * Medium: 2% - 6%
-        * High:   >= 6%
-    - Alligator Crack:
-        * Low:    < 4%
-        * Medium: 4% - 10%
-        * High:   >= 10%
-    """
-    cname = class_name.lower()
-    if "pothole" in cname:
-        if box_norm_area < 0.02:
-            return "Low"
-        elif box_norm_area < 0.06:
-            return "Medium"
-        else:
-            return "High"
-    elif "alligator" in cname or "crack" in cname:
-        if box_norm_area < 0.04:
-            return "Low"
-        elif box_norm_area < 0.10:
-            return "Medium"
-        else:
-            return "High"
-    return "Medium"
+COLORS = {"Low": (80, 175, 76), "Medium": (0, 165, 255), "High": (54, 67, 244)}   # BGR
 
-class RoadDistressDetector:
-    """Real-time YOLO11 inference engine for live video patrol and mobile camera stream."""
 
-    def __init__(self, model_path: Optional[str] = None, conf_threshold: float = 0.25):
-        resolved_path = model_path or find_best_model_weights()
-        self.model_path = resolved_path
-        self.conf_threshold = conf_threshold
-        self.device = 0 if torch.cuda.is_available() else "cpu"
-        
-        print(f"[Detector] Loading YOLO11 model from: {resolved_path} (Device: {self.device})")
-        self.model = YOLO(resolved_path)
-        # Warmup
-        try:
-            dummy = np.zeros((320, 320, 3), dtype=np.uint8)
-            self.model(dummy, device=self.device, verbose=False)
-            print("[Detector] Model warmup complete.")
-        except Exception as e:
-            print(f"[Detector] Warmup skipped: {e}")
+def boxes_to_dets(res, W, H):
+    """Ultralytics result -> list of detection dicts (with track_id when tracking)."""
+    dets = []
+    ids = res.boxes.id
+    for k, b in enumerate(res.boxes):
+        cls = int(b.cls)
+        name = CLASS_NAMES.get(cls, str(cls))
+        x1, y1, x2, y2 = (float(v) for v in b.xyxy[0])
+        xc, yc, w, h = (x1 + x2) / 2 / W, (y1 + y2) / 2 / H, (x2 - x1) / W, (y2 - y1) / H
+        score = severity_score(xc, yc, w, h, name)
+        dets.append({"damage_type": name, "confidence": round(float(b.conf), 3),
+                     "bbox": [round(x1), round(y1), round(x2), round(y2)],
+                     "bbox_norm": [round(xc, 4), round(yc, 4), round(w, 4), round(h, 4)],
+                     "severity": severity_label(score, name), "severity_score": score,
+                     "track_id": int(ids[k]) if ids is not None else None})
+    return dets
 
-    def detect_frame(self, frame: np.ndarray, conf_threshold: Optional[float] = None) -> Dict[str, Any]:
-        """
-        Run inference on a single BGR OpenCV frame.
-        Returns detection metadata and normalized box coordinates for frontend canvas rendering.
-        """
-        conf = conf_threshold or self.conf_threshold
-        h, w = frame.shape[:2]
-        frame_area = max(1, h * w)
 
-        results = self.model(frame, conf=conf, device=self.device, verbose=False, imgsz=640)
-        
-        detections: List[Dict[str, Any]] = []
-        highest_severity = "None"
-        severity_order = {"None": 0, "Low": 1, "Medium": 2, "High": 3}
+def _valid_checkpoint(path):
+    """A .pt file is a zip archive; a half-written copy fails this check."""
+    try:
+        with zipfile.ZipFile(path) as z:
+            return z.testzip() is None
+    except (zipfile.BadZipFile, OSError):
+        return False
 
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = box.xyxy[0].tolist()
-                confidence = float(box.conf[0])
-                class_id = int(box.cls[0])
-                class_name = self.model.names.get(class_id, f"class_{class_id}")
 
-                box_w = max(0.0, x2 - x1)
-                box_h = max(0.0, y2 - y1)
-                box_area = box_w * box_h
-                norm_area = box_area / frame_area
+_copy_lock = threading.Lock()
 
-                sev = estimate_severity(class_name, norm_area)
-                if severity_order.get(sev, 0) > severity_order.get(highest_severity, 0):
-                    highest_severity = sev
 
-                # Normalized coordinates (0.0 to 1.0) for resolution-independent canvas drawing
-                detections.append({
-                    "class_id": class_id,
-                    "class_name": class_name,
-                    "confidence": round(confidence, 3),
-                    "severity": sev,
-                    "box_pixels": [int(x1), int(y1), int(x2), int(y2)],
-                    "box_norm": [
-                        round(x1 / w, 4),
-                        round(y1 / h, 4),
-                        round(x2 / w, 4),
-                        round(y2 / h, 4)
-                    ],
-                    "norm_area": round(norm_area, 4)
-                })
+def current_weights():
+    """Path of the weights file the backend should use.
+    Training rewrites best.pt / last.pt every epoch, so we copy to a temp file,
+    verify it is complete, then swap it in. A good older copy is kept on failure."""
+    with _copy_lock:
+        for p in MODEL_CANDIDATES:
+            if not p.exists():
+                continue
+            local = BACKEND_DIR / "models_cache" / p.name
+            local.parent.mkdir(exist_ok=True)
+            if local.exists() and local.stat().st_mtime >= p.stat().st_mtime and _valid_checkpoint(local):
+                return local, p
+            for _ in range(5):
+                tmp = local.with_name(f"{local.stem}.{uuid.uuid4().hex[:6]}.tmp")
+                try:
+                    shutil.copy2(p, tmp)
+                    if _valid_checkpoint(tmp):
+                        os.replace(tmp, local)
+                        return local, p
+                finally:
+                    if tmp.exists():
+                        tmp.unlink()
+                time.sleep(1)                     # training was mid-write; try again
+            if local.exists() and _valid_checkpoint(local):
+                return local, p                   # fall back to the last good copy
+        raise RuntimeError("No model weights found yet. Train first (scripts/train.py).")
 
-        return {
-            "num_detections": len(detections),
-            "highest_severity": highest_severity,
-            "detections": detections,
-            "frame_dims": {"width": w, "height": h},
-            "model_path": str(Path(self.model_path).name)
-        }
 
-# Global singleton instance loaded on demand
-_detector_instance: Optional[RoadDistressDetector] = None
+class Detector:
+    def __init__(self):
+        self.model = None
+        self.model_path = None
+        self.loaded_at = None
+        self._lock = threading.Lock()
 
-def get_detector() -> RoadDistressDetector:
-    global _detector_instance
-    if _detector_instance is None:
-        _detector_instance = RoadDistressDetector()
-    return _detector_instance
+    def load(self):
+        from ultralytics import YOLO
+        local, src = current_weights()
+        with self._lock:
+            self.model = YOLO(str(local))
+            self.model_path = str(src)
+            self.loaded_at = time.time()
+        return self.info()
+
+    def info(self):
+        return {"loaded": self.model is not None, "weights": self.model_path,
+                "provisional": bool(self.model_path and "final.pt" not in self.model_path),
+                "loaded_at": self.loaded_at}
+
+    def detect(self, image_path, conf=CONF_THRESHOLD):
+        if self.model is None:
+            self.load()
+        img = cv2.imread(str(image_path))
+        if img is None:
+            raise ValueError("Could not read image")
+        H, W = img.shape[:2]
+        t0 = time.time()
+        with self._lock:
+            res = self.model.predict(img, conf=conf, device=INFER_DEVICE, verbose=False)[0]
+        ms = (time.time() - t0) * 1000
+
+        return boxes_to_dets(res, W, H), img, round(ms, 1)
+
+    @staticmethod
+    def annotate(img, dets, out_path):
+        cv2.imwrite(str(out_path), Detector.draw(img, dets))
+
+    @staticmethod
+    def draw(img, dets):
+        im = img.copy()
+        th = max(2, im.shape[1] // 400)
+        for d in dets:
+            x1, y1, x2, y2 = d["bbox"]
+            c = COLORS[d["severity"]]
+            cv2.rectangle(im, (x1, y1), (x2, y2), c, th)
+            label = f"{'Pothole' if d['damage_type'] == 'pothole' else 'Alligator'} {d['severity']} {d['confidence']:.2f}"
+            if d.get("track_id") is not None:
+                label = f"#{d['track_id']} " + label
+            fs = max(0.5, im.shape[1] / 1600)
+            (tw, tht), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fs, th)
+            lx = max(0, min(x1, im.shape[1] - tw - 6))          # keep label inside the image
+            ly = y1 if y1 - tht - 8 >= 0 else y2 + tht + 8       # below the box if no room above
+            cv2.rectangle(im, (lx, ly - tht - 8), (lx + tw + 6, ly), c, -1)
+            cv2.putText(im, label, (lx + 3, ly - 5), cv2.FONT_HERSHEY_SIMPLEX, fs, (255, 255, 255), th)
+        return im
+
+
+detector = Detector()

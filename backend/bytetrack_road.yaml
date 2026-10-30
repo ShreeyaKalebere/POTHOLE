@@ -1,0 +1,9 @@
+# ByteTrack settings tuned for road damage seen from a moving phone/dashcam.
+# Phone live mode sends ~3-6 frames/s, so a lost track is kept for 15 frames (~3-4 s).
+tracker_type: bytetrack
+track_high_thresh: 0.25   # detections above this are matched first
+track_low_thresh: 0.1     # weaker detections can still continue an existing track
+new_track_thresh: 0.30    # a new damage ID is only started above this confidence
+track_buffer: 15          # frames to remember a damage that briefly disappears
+match_thresh: 0.8         # IoU matching threshold between frames
+fuse_score: True

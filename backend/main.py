@@ -1,453 +1,408 @@
-from typing import List, Optional, Dict, Any
-from pathlib import Path
-import json
-import socket
-import time
+"""
+FastAPI backend - Road Damage & Municipal Reporting System.
+Run (from the backend folder):  uvicorn main:app --reload --port 8000
+API docs:                       http://localhost:8000/docs
+"""
+import threading
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Optional
+
+from bson import ObjectId
+import os
+import tempfile
+
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+import auth
+import media_store
+from config import DASHBOARD_DIST, SESSION_DAYS, STATUSES, SEVERITIES
+from db import incidents, init_indexes, next_incident_code, client
+from detector import detector
+from gps import exif_gps
+from incident_store import upsert_incident
+import live
 import cv2
 import numpy as np
+from fastapi.concurrency import run_in_threadpool
+from reports import to_csv, to_pdf
+from severity import SEVERITY_RANK
+from zones import ZONES, CITY_CENTER, zone_for
 
-from fastapi import FastAPI, HTTPException, Query, status, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+app = FastAPI(title="Road Damage & Municipal Reporting API", version="1.0")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.middleware("http")(auth.middleware)
 
-from models import (
-    DefectIngest, DefectRecord, DefectStatusUpdate, AnalyticsSummary,
-    AuthLoginRequest, OfficerProfile, ZoneBreakdownResponse
-)
-from database import (
-    insert_defects, query_defects, update_defect_status, get_summary_statistics,
-    get_zonewise_statistics
-)
-from detector import get_detector
-from zones import get_zone_profiles_map, load_zones_geojson, resolve_zone_for_coordinates
+ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+MAX_UPLOAD_MB = 20
 
 
+@app.on_event("startup")
+def startup():
+    init_indexes()
 
-app = FastAPI(
-    title="Kolhapur Municipal Road Distress Reporting System API",
-    description="Backend service for ingesting vehicle road damage detections, managing Kolhapur municipal repair workflows by zone, and streaming GeoJSON for map visualization.",
-    version="2.0.0"
-)
-
-# Enable CORS for frontend dashboard
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Dynamic zone profiles generated from single editable GeoJSON configuration
-KOLHAPUR_ZONE_PROFILES = get_zone_profiles_map()
+    def _load():
+        try:
+            detector.load()
+        except Exception as e:
+            print("Model not loaded yet:", e)
+    threading.Thread(target=_load, daemon=True).start()   # don't block server start
 
 
-@app.get("/health", tags=["Health"])
-@app.get("/api/health", tags=["Health"])
-def health_check():
-    return {
-        "status": "online",
-        "service": "Kolhapur Road Damage & Municipal Reporting API",
-        "region": "Kolhapur, Maharashtra, India",
-        "zones_supported": list(KOLHAPUR_ZONE_PROFILES.keys()),
-        "classes_supported": ["pothole", "alligator_crack"],
-        "docs_url": "/docs"
-    }
+# ------------------------------------------------------------------ helpers
+def serialize(inc):
+    inc = dict(inc)
+    inc["id"] = str(inc.pop("_id"))
+    lng, lat = (inc.get("location") or {}).get("coordinates", [None, None])
+    inc["lat"], inc["lng"] = lat, lng
+    for k in ("detected_at", "updated_at"):
+        if isinstance(inc.get(k), datetime):
+            inc[k] = inc[k].isoformat()
+    for h in inc.get("history", []):
+        if isinstance(h.get("at"), datetime):
+            h["at"] = h["at"].isoformat()
+    for im in inc.get("images", []):
+        if isinstance(im.get("at"), datetime):
+            im["at"] = im["at"].isoformat()
+    return inc
 
-@app.post("/api/auth/login", response_model=OfficerProfile, tags=["Authentication"])
-def login_officer(req: AuthLoginRequest):
-    """Authenticate ward officer or civil engineer for Kolhapur area-wise triage."""
-    zone_key = req.zone.strip()
-    for k, p in KOLHAPUR_ZONE_PROFILES.items():
-        if k.lower() == zone_key.lower():
-            return p
-    return KOLHAPUR_ZONE_PROFILES["all"]
 
-@app.get("/api/auth/zones", tags=["Authentication"])
-def list_zones():
-    """Returns all 5 Kolhapur municipal zones with example areas and coordinates."""
-    return KOLHAPUR_ZONE_PROFILES
+def build_filter(damage_type=None, severity=None, status=None, zone=None,
+                 date_from=None, date_to=None, include_demo=True):
+    q = {}
+    if damage_type:
+        q["damage_type"] = {"$in": damage_type.split(",")}
+    if severity:
+        q["severity"] = {"$in": severity.split(",")}
+    if status:
+        q["status"] = {"$in": status.split(",")}
+    if zone and zone != "All":
+        q["zone"] = zone
+    if date_from or date_to:
+        q["detected_at"] = {}
+        if date_from:
+            q["detected_at"]["$gte"] = datetime.fromisoformat(date_from)
+        if date_to:
+            q["detected_at"]["$lt"] = datetime.fromisoformat(date_to) + timedelta(days=1)
+    if not include_demo:
+        q["demo"] = {"$ne": True}
+    return q
 
-@app.get("/api/zones/geojson", tags=["Zones"])
-def get_zones_geojson_endpoint():
-    """Return the single editable GeoJSON definition of the 5 Kolhapur operational study zones."""
-    return load_zones_geojson()
 
-@app.get("/api/zones/statistics", response_model=ZoneBreakdownResponse, tags=["Zones"])
-def get_zones_statistics_endpoint():
-    """Returns zone-wise counts for total incidents, potholes, alligator cracks, severity, and status."""
-    return get_zonewise_statistics()
-
-@app.post("/api/defects/report", status_code=status.HTTP_201_CREATED, tags=["Ingestion"])
-def ingest_defects(reports: List[DefectIngest]):
-    """Receives live batch defect detections from the vehicle edge tracking pipeline."""
-    if not reports:
-        raise HTTPException(status_code=400, detail="Empty defect reports list.")
-    payload = [r.dict() for r in reports]
-    count = insert_defects(payload)
-    return {
-        "status": "success",
-        "defects_ingested": count,
-        "message": f"Successfully recorded {count} Kolhapur road distress events."
-    }
-
-@app.get("/api/defects", response_model=List[DefectRecord], tags=["Defects"])
-def list_defects(
-    class_name: Optional[str] = Query(None, description="Filter by class: pothole or alligator_crack"),
-    severity: Optional[str] = Query(None, description="Filter by severity: Low, Medium, High"),
-    status_filter: Optional[str] = Query(None, alias="status", description="Filter by status: reported, inspected, in_progress, repaired"),
-    zone: Optional[str] = Query(None, description="Filter by Kolhapur zone, e.g. Central Kolhapur"),
-    area: Optional[str] = Query(None, description="Filter by locality, e.g. Shahupuri, Rankala"),
-    limit: int = Query(100, ge=1, le=500, description="Maximum records to return")
-):
-    """Lists Kolhapur road defect records with optional zone filtering."""
-    results = query_defects(
-        class_name=class_name,
-        severity=severity,
-        status=status_filter,
-        zone=zone,
-        area=area,
-        limit=limit
-    )
-    return results
-
-@app.get("/api/defects/geojson", tags=["Mapping"])
-def get_defects_geojson(
-    severity: Optional[str] = None,
-    status_filter: Optional[str] = Query(None, alias="status"),
-    zone: Optional[str] = None
-):
-    """Generates a standard GeoJSON FeatureCollection for Kolhapur map rendering."""
-    records = query_defects(severity=severity, status=status_filter, zone=zone, limit=500)
-    features = []
-    for r in records:
-        features.append({
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [r["longitude"], r["latitude"]]
-            },
-            "properties": {
-                "id": r["id"],
-                "defect_id": r["defect_id"],
-                "class_name": r["class_name"],
-                "severity": r["severity"],
-                "confidence": r["confidence"],
-                "status": r["status"],
-                "created_at": r["created_at"],
-                "zone_id": r.get("zone_id"),
-                "zone_name": r.get("zone_name"),
-                "zone": r.get("zone_name") or r.get("zone", "Central Kolhapur"),
-                "area": r.get("area", ""),
-                "street": r.get("street", ""),
-                "assigned_contractor": r.get("assigned_contractor"),
-                "notes": r.get("notes")
-            }
-        })
-    return {
-        "type": "FeatureCollection",
-        "features": features
-    }
-
-@app.patch("/api/defects/{defect_id}/status", tags=["Municipal Workflow"])
-def update_status(defect_id: str, update: DefectStatusUpdate):
-    """Allows Kolhapur municipal engineers to update repair workflow status."""
-    valid_statuses = ["reported", "inspected", "in_progress", "repaired"]
-    if update.status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of {valid_statuses}")
-
-    success = update_defect_status(
-        defect_id=defect_id,
-        new_status=update.status,
-        contractor=update.assigned_contractor,
-        notes=update.notes
-    )
-    if not success:
-        raise HTTPException(status_code=404, detail=f"Defect record '{defect_id}' not found.")
-    return {
-        "status": "success",
-        "message": f"Defect {defect_id} updated to '{update.status}'."
-    }
-
-@app.get("/api/analytics/summary", response_model=AnalyticsSummary, tags=["Analytics"])
-def get_analytics(zone: Optional[str] = None):
-    """Returns Kolhapur municipal KPIs filtered by zone."""
-    return get_summary_statistics(zone=zone)
-
-@app.post("/api/defects/seed_sample", tags=["Testing"])
-def seed_sample_defects():
-    """Seeds the database with sample defect logs from downstream_prototype/sample_municipal_payload.json."""
-    sample_file = Path(__file__).resolve().parent.parent / "downstream_prototype" / "sample_municipal_payload.json"
-    if not sample_file.exists():
-        raise HTTPException(status_code=404, detail="sample_municipal_payload.json not found.")
-    with open(sample_file, "r", encoding="utf-8") as f:
-        samples = json.load(f)
-    count = insert_defects(samples)
-    return {
-        "status": "success",
-        "seeded_count": count
-    }
-
-@app.get("/api/patrol/route", tags=["Patrol"])
-def get_patrol_route(zone: Optional[str] = "Central Kolhapur"):
-    """
-    Returns synchronized Kolhapur dashcam patrol telemetry route.
-    Contains vehicle GPS breadcrumb trail and synchronized road distress detection events.
-    """
-    return {
-        "unit_id": "KMC-PATROL-04",
-        "zone": zone or "Central Kolhapur",
-        "route_name": "Station Road Shahupuri -> Rajarampuri Arterial Survey",
-        "video_url": "/media/dashcam_demo.mp4",
-        "total_duration_sec": 31.0,
-        "base_speed_kmh": 36.0,
-        "waypoints": [
-            {"time_sec": 0.0, "lat": 16.7042, "lng": 74.2395, "street": "Station Road (Shahupuri Bus Stand)"},
-            {"time_sec": 5.0, "lat": 16.7049, "lng": 74.2412, "street": "Station Road (Railway Overbridge)"},
-            {"time_sec": 10.0, "lat": 16.7057, "lng": 74.2429, "street": "Station Road (Shahupuri Corner)"},
-            {"time_sec": 15.0, "lat": 16.7064, "lng": 74.2446, "street": "Laxmipuri Link Road"},
-            {"time_sec": 20.0, "lat": 16.7071, "lng": 74.2462, "street": "Rajarampuri 1st Lane Junction"},
-            {"time_sec": 25.0, "lat": 16.7078, "lng": 74.2477, "street": "Rajarampuri 2nd Lane Main"},
-            {"time_sec": 31.0, "lat": 16.7085, "lng": 74.2492, "street": "Rajarampuri Main Road"}
-        ],
-        "events": [
-            {
-                "time_sec": 3.2,
-                "defect_id": "PATROL-101",
-                "class_name": "pothole",
-                "severity": "High",
-                "confidence": 0.942,
-                "gps": {"latitude": 16.7046, "longitude": 74.2405},
-                "zone": "Central Kolhapur",
-                "area": "Shahupuri",
-                "street": "Station Road (Shahupuri Bus Stand)",
-                "bbox_norm": [0.35, 0.58, 0.28, 0.24],
-                "notes": "Deep impact crater in vehicle travel wheel path."
-            },
-            {
-                "time_sec": 8.5,
-                "defect_id": "PATROL-102",
-                "class_name": "alligator_crack",
-                "severity": "Medium",
-                "confidence": 0.885,
-                "gps": {"latitude": 16.7055, "longitude": 74.2425},
-                "zone": "Central Kolhapur",
-                "area": "Shahupuri",
-                "street": "Station Road (Railway Overbridge)",
-                "bbox_norm": [0.20, 0.60, 0.42, 0.25],
-                "notes": "Interconnected fatigue mesh cracking across lane center."
-            },
-            {
-                "time_sec": 15.8,
-                "defect_id": "PATROL-103",
-                "class_name": "pothole",
-                "severity": "High",
-                "confidence": 0.961,
-                "gps": {"latitude": 16.7065, "longitude": 74.2448},
-                "zone": "Central Kolhapur",
-                "area": "Laxmipuri",
-                "street": "Laxmipuri Link Road",
-                "bbox_norm": [0.42, 0.54, 0.32, 0.26],
-                "notes": "Severe structural asphalt cavity causing traffic deceleration."
-            },
-            {
-                "time_sec": 22.4,
-                "defect_id": "PATROL-104",
-                "class_name": "pothole",
-                "severity": "Medium",
-                "confidence": 0.849,
-                "gps": {"latitude": 16.7074, "longitude": 74.2468},
-                "zone": "Central Kolhapur",
-                "area": "Rajarampuri",
-                "street": "Rajarampuri 1st Lane Junction",
-                "bbox_norm": [0.28, 0.64, 0.24, 0.20],
-                "notes": "Surface pit with loose aggregate gravel scatter."
-            },
-            {
-                "time_sec": 27.5,
-                "defect_id": "PATROL-105",
-                "class_name": "alligator_crack",
-                "severity": "High",
-                "confidence": 0.923,
-                "gps": {"latitude": 16.7082, "longitude": 74.2485},
-                "zone": "Central Kolhapur",
-                "area": "Rajarampuri",
-                "street": "Rajarampuri 2nd Lane Main",
-                "bbox_norm": [0.18, 0.52, 0.50, 0.34],
-                "notes": "Heavy fatigue cracking indicating subgrade moisture ingress."
-            }
-        ]
-    }
-
-def get_local_lan_ip() -> str:
-    """Detect the host machine's local Wi-Fi / Ethernet LAN IP for mobile connectivity."""
+def oid(id_):
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
+        return ObjectId(id_)
     except Exception:
-        return "127.0.0.1"
+        raise HTTPException(404, "Incident not found")
 
-@app.get("/api/system/network_info")
-def get_network_info():
-    """Return local LAN IP and mobile HUD URL for phone camera pairing."""
-    lan_ip = get_local_lan_ip()
-    port = 8000
-    mobile_url = f"http://{lan_ip}:{port}/mobile.html"
+
+# ------------------------------------------------------------------ login
+class LoginBody(BaseModel):
+    password: str
+
+
+@app.get("/api/me")
+def me(request: Request):
+    return {"auth_required": auth.enabled(), "logged_in": auth.is_logged_in(request)}
+
+
+@app.post("/api/login")
+def login(body: LoginBody, request: Request, response: Response):
+    if not auth.enabled():
+        return {"ok": True}
+    if not auth.password_ok(body.password):
+        raise HTTPException(401, "Wrong password")
+    response.set_cookie(auth.COOKIE, auth.make_token(), max_age=SESSION_DAYS * 86400,
+                        httponly=True, samesite="lax", secure=auth.is_https(request))
+    return {"ok": True}
+
+
+@app.post("/api/logout")
+def logout(response: Response):
+    response.delete_cookie(auth.COOKIE)
+    return {"ok": True}
+
+
+@app.get("/media/{name:path}")
+def media(name: str):
+    got = media_store.read(name)
+    if got is None:
+        raise HTTPException(404, "Not found")
+    data, ctype = got
+    return Response(data, media_type=ctype, headers={"Cache-Control": "private, max-age=86400"})
+
+
+# ------------------------------------------------------------------ routes
+@app.get("/api/health")
+def health():
+    try:
+        client.admin.command("ping")
+        mongo = True
+    except Exception:
+        mongo = False
+    return {"api": True, "mongo": mongo, "model": detector.info(),
+            "live_sessions": len(live.active_sessions())}
+
+
+@app.post("/api/model/reload")
+def reload_model():
+    """Call this after training finishes to switch to the newest weights."""
+    try:
+        return detector.load()
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+
+
+@app.get("/api/zones")
+def get_zones():
+    return {"center": CITY_CENTER,
+            "zones": [{"name": n, "lat": la, "lng": lo} for n, (la, lo) in ZONES.items()]}
+
+
+@app.post("/api/detect")
+async def detect(file: UploadFile = File(...), lat: Optional[float] = Form(None),
+                 lng: Optional[float] = Form(None), source: str = Form("upload"),
+                 save: bool = Form(True)):
+    """Upload a road photo -> detections + annotated image; saved as incidents if save=True."""
+    ext = "." + (file.filename or "x.jpg").rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_EXT:
+        raise HTTPException(400, f"Unsupported file type {ext}")
+    data = await file.read()
+    if len(data) > MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(413, f"Image larger than {MAX_UPLOAD_MB} MB")
+
+    now = datetime.now()
+    name = f"{now:%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
+    fd, tmp = tempfile.mkstemp(suffix=ext)
+    try:
+        os.write(fd, data)
+        os.close(fd)
+        gps_source = "form"
+        if lat is None or lng is None:
+            lat, lng = exif_gps(tmp)
+            gps_source = "photo EXIF" if lat is not None else "none"
+        try:
+            dets, img, ms = detector.detect(tmp)
+        except RuntimeError as e:
+            raise HTTPException(503, str(e))
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    finally:
+        os.unlink(tmp)
+
+    image_url = media_store.save_image(f"{name}.jpg", img)
+    ann_url = media_store.save_image(f"{name}_det.jpg", detector.draw(img, dets))
+
+    results = []
+    for d in dets:
+        inc_id, is_new = (upsert_incident(d, lat, lng, image_url, ann_url, source, now)
+                          if save else (None, None))
+        results.append({**d, "incident_id": inc_id, "new_incident": is_new})
+    return {"detections": results, "count": len(results), "inference_ms": ms,
+            "image_url": image_url, "annotated_url": ann_url,
+            "lat": lat, "lng": lng, "gps_source": gps_source,
+            "zone": zone_for(lat, lng), "model": detector.info()}
+
+
+@app.get("/api/incidents")
+def list_incidents(damage_type: Optional[str] = None, severity: Optional[str] = None,
+                   status: Optional[str] = None, zone: Optional[str] = None,
+                   date_from: Optional[str] = None, date_to: Optional[str] = None,
+                   sort: str = "priority", limit: int = Query(500, le=5000), skip: int = 0):
+    q = build_filter(damage_type, severity, status, zone, date_from, date_to)
+    items = list(incidents.find(q, {"history": 0}).sort("detected_at", -1).skip(skip).limit(limit))
+    if sort == "priority":   # open + high severity + many reports first
+        items.sort(key=lambda i: (i["status"] == "Repaired", -SEVERITY_RANK[i["severity"]],
+                                  -i.get("reports_count", 1)))
+    return {"total": incidents.count_documents(q), "items": [serialize(i) for i in items]}
+
+
+@app.get("/api/incidents/{incident_id}")
+def get_incident(incident_id: str):
+    inc = incidents.find_one({"_id": oid(incident_id)})
+    if not inc:
+        raise HTTPException(404, "Incident not found")
+    return serialize(inc)
+
+
+class IncidentUpdate(BaseModel):
+    status: Optional[str] = None
+    assigned_to: Optional[str] = None
+    severity: Optional[str] = None
+    note: Optional[str] = None
+    by: str = "officer"
+
+
+@app.patch("/api/incidents/{incident_id}")
+def update_incident(incident_id: str, body: IncidentUpdate):
+    inc = incidents.find_one({"_id": oid(incident_id)})
+    if not inc:
+        raise HTTPException(404, "Incident not found")
+    s = {"updated_at": datetime.now()}
+    notes = []
+    if body.status:
+        if body.status not in STATUSES:
+            raise HTTPException(400, f"status must be one of {STATUSES}")
+        s["status"] = body.status
+        notes.append(f"Status: {inc['status']} -> {body.status}")
+    if body.severity:
+        if body.severity not in SEVERITIES:
+            raise HTTPException(400, f"severity must be one of {SEVERITIES}")
+        s["severity"] = body.severity
+        notes.append(f"Severity set to {body.severity} (manual)")
+    if body.assigned_to is not None:
+        s["assigned_to"] = body.assigned_to or None
+        notes.append(f"Assigned to {body.assigned_to or 'nobody'}")
+    if body.note:
+        notes.append(body.note)
+    hist = {"at": s["updated_at"], "status": s.get("status", inc["status"]), "by": body.by,
+            "note": " | ".join(notes) or "Updated"}
+    incidents.update_one({"_id": inc["_id"]}, {"$set": s, "$push": {"history": hist}})
+    return serialize(incidents.find_one({"_id": inc["_id"]}))
+
+
+@app.delete("/api/incidents/{incident_id}")
+def delete_incident(incident_id: str):
+    """Permanently removes one incident and its photos (e.g. a false detection)."""
+    inc = incidents.find_one({"_id": oid(incident_id)})
+    if not inc:
+        raise HTTPException(404, "Incident not found")
+    # a photo can be shared with other incidents found in the same frame - only delete unused ones
+    for im in inc.get("images", []):
+        for url in (im.get("url"), im.get("annotated_url")):
+            if url and not incidents.count_documents({"_id": {"$ne": inc["_id"]},
+                                                      "$or": [{"images.url": url}, {"images.annotated_url": url}]}):
+                media_store.delete(url)
+    incidents.delete_one({"_id": inc["_id"]})
+    return {"deleted": inc["incident_code"]}
+
+
+@app.get("/api/stats")
+def stats(zone: Optional[str] = None, days: int = 30):
+    q = build_filter(zone=zone)
+
+    def count_by(field):
+        return {r["_id"]: r["n"] for r in incidents.aggregate(
+            [{"$match": q}, {"$group": {"_id": f"${field}", "n": {"$sum": 1}}}])}
+
+    since = datetime.now() - timedelta(days=days - 1)
+    trend_raw = incidents.aggregate([
+        {"$match": {**q, "detected_at": {"$gte": since.replace(hour=0, minute=0, second=0)}}},
+        {"$group": {"_id": {"d": {"$dateToString": {"format": "%Y-%m-%d", "date": "$detected_at"}},
+                            "t": "$damage_type"}, "n": {"$sum": 1}}}])
+    trend = {}
+    for r in trend_raw:
+        trend.setdefault(r["_id"]["d"], {})[r["_id"]["t"]] = r["n"]
+    days_list = [(since + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
+    open_q = {**q, "status": {"$ne": "Repaired"}}
     return {
-        "local_ip": lan_ip,
-        "port": port,
-        "mobile_hud_url": mobile_url,
-        "ws_url": f"ws://{lan_ip}:{port}/ws/live_patrol"
+        "total": incidents.count_documents(q),
+        "open": incidents.count_documents(open_q),
+        "high_open": incidents.count_documents({**open_q, "severity": "High"}),
+        "repaired": incidents.count_documents({**q, "status": "Repaired"}),
+        "by_type": count_by("damage_type"), "by_severity": count_by("severity"),
+        "by_status": count_by("status"), "by_zone": count_by("zone"),
+        "trend": [{"date": d, "pothole": trend.get(d, {}).get("pothole", 0),
+                   "alligator_crack": trend.get(d, {}).get("alligator_crack", 0)} for d in days_list],
     }
 
-@app.websocket("/ws/live_patrol")
-async def live_patrol_stream(websocket: WebSocket):
-    """
-    High-performance WebSocket endpoint for mobile camera streaming.
-    Receives video frames (binary JPEG or base64 JSON), runs YOLO11 inference,
-    auto-ingests high-confidence hazards into municipal SQLite/MongoDB, and returns bounding boxes.
-    """
-    await websocket.accept()
-    detector = get_detector()
-    last_saved_time = 0.0
-    client_gps = {"latitude": 16.7050, "longitude": 74.2433}
-    active_zone = "Central Kolhapur"
-    patrol_vehicle_id = "PATROL-MOBILE-1"
-    
-    print("[LivePatrol] Mobile Camera HUD connected via WebSocket.")
-    
+
+def _export_items(**f):
+    items = list(incidents.find(build_filter(**f)))
+    items.sort(key=lambda i: (i["status"] == "Repaired", -SEVERITY_RANK[i["severity"]], i["detected_at"]))
+    return items
+
+
+@app.get("/api/export/csv")
+def export_csv(damage_type: Optional[str] = None, severity: Optional[str] = None,
+               status: Optional[str] = None, zone: Optional[str] = None,
+               date_from: Optional[str] = None, date_to: Optional[str] = None):
+    items = _export_items(damage_type=damage_type, severity=severity, status=status, zone=zone,
+                          date_from=date_from, date_to=date_to)
+    return Response(to_csv(items), media_type="text/csv",
+                    headers={"Content-Disposition": f"attachment; filename=road_damage_{datetime.now():%Y%m%d}.csv"})
+
+
+@app.get("/api/export/pdf")
+def export_pdf(damage_type: Optional[str] = None, severity: Optional[str] = None,
+               status: Optional[str] = None, zone: Optional[str] = None,
+               date_from: Optional[str] = None, date_to: Optional[str] = None):
+    f = dict(damage_type=damage_type, severity=severity, status=status, zone=zone,
+             date_from=date_from, date_to=date_to)
+    items = _export_items(**f)
+    st = {"total": len(items), "by_type": {}, "by_severity": {}, "by_status": {}}
+    for i in items:
+        for k, fld in (("by_type", "damage_type"), ("by_severity", "severity"), ("by_status", "status")):
+            st[k][i[fld]] = st[k].get(i[fld], 0) + 1
+    ftxt = ", ".join(f"{k}={v}" for k, v in f.items() if v) or "none (all incidents)"
+    return Response(to_pdf(items, st, ftxt), media_type="application/pdf",
+                    headers={"Content-Disposition": f"attachment; filename=road_damage_{datetime.now():%Y%m%d}.pdf"})
+
+
+# ------------------------------------------------------------------ live patrol (phone camera)
+@app.post("/api/live/start")
+def live_start():
     try:
-        while True:
-            message = await websocket.receive()
-            frame = None
-            
-            # Handle text messages (telemetry or JSON base64 frames)
-            if "text" in message and message["text"]:
-                try:
-                    payload = json.loads(message["text"])
-                    msg_type = payload.get("type", "")
-                    
-                    if msg_type == "telemetry":
-                        if "gps" in payload and payload["gps"]:
-                            client_gps = payload["gps"]
-                        if "zone" in payload and payload["zone"]:
-                            active_zone = payload["zone"]
-                        if "vehicle_id" in payload:
-                            patrol_vehicle_id = payload["vehicle_id"]
-                        continue
-                    
-                    elif "image" in payload:
-                        # Base64 encoded JPEG
-                        import base64
-                        img_b64 = payload["image"]
-                        if "," in img_b64:
-                            img_b64 = img_b64.split(",", 1)[1]
-                        raw_bytes = base64.b64decode(img_b64)
-                        np_arr = np.frombuffer(raw_bytes, np.uint8)
-                        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                        if "gps" in payload and payload["gps"]:
-                            client_gps = payload["gps"]
-                except Exception as e:
-                    print(f"[LivePatrol] JSON parse error: {e}")
-                    continue
-                    
-            # Handle binary JPEG frames (fastest)
-            elif "bytes" in message and message["bytes"]:
-                raw_bytes = message["bytes"]
-                np_arr = np.frombuffer(raw_bytes, np.uint8)
-                frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                
-            if frame is None:
-                continue
+        s = live.start_session()
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+    return s.summary()
 
-            t_start = time.time()
-            # Execute YOLO11 inference
-            result = detector.detect_frame(frame)
-            latency = max(0.001, time.time() - t_start)
-            fps = round(1.0 / latency, 1)
 
-            # Auto-record defect if confidence is high and rate limit passed (at most once every 2.5s)
-            recorded_id = None
-            now = time.time()
-            if result["num_detections"] > 0 and (now - last_saved_time) > 2.5:
-                # Find the most severe detection with high confidence
-                qualifying = [
-                    d for d in result["detections"]
-                    if d["confidence"] >= 0.60 and d["severity"] in ["Medium", "High"]
-                ]
-                if qualifying:
-                    top_defect = qualifying[0]
-                    defect_numeric_id = int(time.time() * 10) % 90000 + 10000
-                    snapshot_filename = f"patrol_mobile_{defect_numeric_id}.jpg"
-                    media_root = Path(__file__).resolve().parent.parent / "real_world_test"
-                    media_root.mkdir(parents=True, exist_ok=True)
-                    cv2.imwrite(str(media_root / snapshot_filename), frame)
-                    
-                    defect_dict = {
-                        "defect_id": defect_numeric_id,
-                        "class_name": top_defect["class_name"],
-                        "severity": top_defect["severity"],
-                        "confidence": top_defect["confidence"],
-                        "status": "reported",
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "gps": {
-                            "latitude": float(client_gps.get("latitude", 16.7050)),
-                            "longitude": float(client_gps.get("longitude", 74.2433))
-                        },
-                        "zone": active_zone,
-                        "area": "Live Mobile Patrol Route",
-                        "street": f"Patrol Stream ({patrol_vehicle_id})",
-                        "bbox_norm": top_defect["box_norm"],
-                        "assigned_contractor": "Kolhapur Rapid Pothole Response Team",
-                        "notes": f"Auto-detected by Live Mobile Patrol Camera ({top_defect['class_name']} with {top_defect['severity']} severity)."
-                    }
-                    try:
-                        insert_defects([defect_dict])
-                        recorded_id = f"DEFECT-{defect_numeric_id}"
-                        last_saved_time = now
-                        print(f"[LivePatrol] Auto-logged road hazard: {recorded_id} at GPS {client_gps}")
-                    except Exception as e:
-                        print(f"[LivePatrol] Database insertion error: {e}")
+@app.post("/api/live/frame")
+async def live_frame(session_id: str = Form(...), file: UploadFile = File(...),
+                     lat: Optional[float] = Form(None), lng: Optional[float] = Form(None),
+                     save: bool = Form(True)):
+    s = live.get_session(session_id)
+    if s is None:
+        raise HTTPException(404, "Live session expired - press Start again")
+    data = await file.read()
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(400, "Bad frame")
+    # tracking is CPU/GPU work - run it off the event loop
+    dets, new = await run_in_threadpool(s.process, img, lat, lng, save)
+    return {"detections": dets, "new_incidents": new, "frame_size": [img.shape[1], img.shape[0]],
+            "zone": zone_for(lat, lng), **s.summary()}
 
-            # Send response back to mobile client
-            response_payload = {
-                "status": "ok",
-                "fps": fps,
-                "latency_ms": round(latency * 1000, 1),
-                "num_detections": result["num_detections"],
-                "highest_severity": result["highest_severity"],
-                "detections": result["detections"],
-                "recorded_defect_id": recorded_id,
-                "model": result["model_path"]
-            }
-            await websocket.send_json(response_payload)
 
-    except WebSocketDisconnect:
-        print("[LivePatrol] Mobile Camera HUD disconnected.")
-    except Exception as e:
-        print(f"[LivePatrol] Live stream error: {e}")
+@app.post("/api/live/stop")
+def live_stop(session_id: str = Form(...)):
+    s = live.stop_session(session_id)
+    return s.summary() if s else {"session_id": session_id, "stopped": True}
 
-# Mount static files: real_world_test media, presentation deck, and frontend dashboard
-root_dir = Path(__file__).resolve().parent.parent
-presentation_dir = root_dir / "presentation"
-frontend_dir = root_dir / "frontend"
-media_dir = root_dir / "real_world_test"
 
-if media_dir.exists():
-    app.mount("/media", StaticFiles(directory=str(media_dir)), name="media")
+@app.get("/api/live/sessions")
+def live_sessions():
+    return {"sessions": live.active_sessions()}
 
-if presentation_dir.exists():
-    app.mount("/presentation", StaticFiles(directory=str(presentation_dir), html=True), name="presentation")
 
-if frontend_dir.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+# ------------------------------------------------------------------ demo data
+@app.post("/api/demo/seed")
+def demo_seed(n: int = 120):
+    from seed_demo import seed
+    return {"inserted": seed(n)}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
+@app.delete("/api/demo")
+def demo_clear():
+    return {"deleted": incidents.delete_many({"demo": True}).deleted_count}
+
+
+# ------------------------------------------------------------------ dashboard (built React app)
+# When dashboard/dist exists (npm run build, or inside Docker), the backend also serves the
+# dashboard, so the whole system runs on one address. Unknown paths return index.html so
+# React's page links (/map, /live, ...) work when opened directly.
+if DASHBOARD_DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=DASHBOARD_DIST / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        f = (DASHBOARD_DIST / path).resolve()
+        if path and DASHBOARD_DIST.resolve() in f.parents and f.is_file():
+            return FileResponse(f)
+        return FileResponse(DASHBOARD_DIST / "index.html")

@@ -1,193 +1,101 @@
-# Computer Vision and Deep Learning Based Road Damage and Municipal Reporting System
+# Computer Vision & Deep Learning Based Road Damage and Municipal Reporting System
 
-An end-to-end, production-grade automated road distress detection, multi-object tracking, and municipal workflow reporting platform. Developed for real-time edge vehicle capture, automated triage, and civil infrastructure management.
+YOLO11 + FastAPI + MongoDB + React system that detects **potholes** and **alligator cracks** from road
+photos and live phone video, estimates severity, records GPS, and gives municipal officers a dashboard
+(map, repair worklist, inspect & dispatch, PDF/CSV reports).
 
----
+## Results (test set: 2,652 unseen images)
 
-## 1. System Architecture
+| Model | Training change | mAP@50 | Precision | Recall |
+|---|---|---|---|---|
+| **v1** | baseline YOLO11s, 640 px, 107 epochs | **0.639** | 0.677 | 0.588 |
+| v2 | 960 px + Indian images x2 | 0.608 | 0.673 | 0.572 |
+| v3 | rain/night/blur augmentation | 0.616 | 0.670 | 0.559 |
+| v4 | label fixes | 0.626 | 0.682 | 0.572 |
+| v5 | Kolhapur model pseudo-labels | 0.618 | 0.667 | 0.575 |
+| **v6** (deployed) | Kolhapur frames, boxes reviewed | 0.623 | **0.690** | 0.567 |
 
-```mermaid
-graph TD
-  A["Vehicle Dashcam / Smartphone Stream"] -->|OpenCV Video Capture| B["YOLO11 Object Detector"]
-  B -->|Bounding Boxes & Confidences| C["ByteTrack Multi-Object Tracking"]
-  C -->|Persistent Defect Re-ID| D["Area-Based Severity Assessment"]
-  D -->|Low / Medium / High Priority| E["GPS Telemetry & Timestamp Tagging"]
-  E -->|JSON Event Dispatch| F["FastAPI Municipal Backend"]
-  F -->|Dual-Engine Persistence| G[("SQLite / MongoDB Atlas")]
-  G -->|GeoJSON Stream & REST API| H["RoadCare AI Web Dashboard"]
-  H -->|Interactive Map & Triage Worklist| I["Contractor Assignment & Field Closure"]
-```
+- Speed: ~10 ms / image on RTX 4060 (≈100 FPS), ~105 ms on CPU. Model size 19 MB.
+- Kolhapur field test (469 frames, 27 Oct 2026): v6 found ~24% more real damage than v1.
+- All epoch-by-epoch numbers: `qa/results_all_epochs.csv`; graphs and confusion matrices: `results/`.
+- Datasets and field videos are **not** in this repository (size, and faces / number plates in the videos).
 
----
 
-## 2. Core Capabilities
+Group G3 · DYPCET Kolhapur · Guide: Mrs. S. V. Shinge
 
-- **State-of-the-Art Detection**: Powered by Ultralytics **YOLO11**, optimized for real-time inference on edge and vehicle-mounted hardware.
-- **Strict Canonical 2-Class Taxonomy**:
-  - `Class 0`: **`pothole`** (road cavities, depressions, craters, pavement breaks)
-  - `Class 1`: **`alligator_crack`** (interconnected fatigue cracking, load-induced pavement mesh)
-- **Zero Video Frame Leakage**: Group-partitioned splits clustered strictly by camera run sequence IDs (`source_group`). No consecutive video frames cross train, validation, or test partitions.
-- **Multi-Object Tracking (ByteTrack)**: Maintains unique IDs across consecutive video frames so that a single pothole is reported exactly once to municipal databases rather than hundreds of times per second.
-- **Automated Severity Heuristic**:
-  - **Pothole**: Low ($< 2\%$), Medium ($2\% - 6\%$), High ($\ge 6\%$ normalized frame area)
-  - **Alligator Crack**: Low ($< 4\%$), Medium ($4\% - 10\%$), High ($\ge 10\%$ normalized frame area)
-- **Dual-Engine Persistence**: Seamless auto-fallback to zero-configuration local **SQLite** (`backend/road_damage.db`) when **MongoDB** (`MONGO_URI`) is not specified.
-- **Interactive Geospatial Dashboard**: Sleek dark-mode interface with Leaflet mapping, live metric counters, defect inspection visualizer, contractor dispatch, and JSON municipal export.
+## Folder layout
 
----
+| Folder | What it is | Module |
+|---|---|---|
+| `scripts/build_dataset.py` | Merges the 8 raw datasets in `F:\POTHOLEDATASET` into one clean YOLO dataset | 1 |
+| `dataset/` | Clean dataset (images, labels, `data.yaml`, `manifest.json`) | 1 |
+| `qa/` | Dataset health report + label check images | 1 |
+| `scripts/train.py` | YOLO11 training | 2 |
+| `runs/` | Training results (weights, mAP curves, confusion matrix) | 2 |
+| `backend/` | FastAPI + MongoDB API: detection, severity, GPS, incidents, reports | 3, 5 |
+| `dashboard/` | React.js dashboard: map, worklist, dispatch, charts, exports | 4 |
 
-## 3. Dataset Composition (`RoadDamage20K`)
+Classes: `0 = pothole`, `1 = alligator_crack`. Severity: Low / Medium / High.
 
-The dataset integrates verified vehicle-facing road imagery from **RDD2020** (CC BY 4.0, DOI: 10.17632/5ty2wb6gvg.1) and **Pothole600** with authentic Indian road condition emphasis:
+## Run it (VS Code)
 
-| Metric | Count / Details |
-| :--- | :--- |
-| **Total Unique Images** | **10,389** (100% verified ground truth, no synthetic duplicates) |
-| **Train Set** | 7,270 images (70.0%) |
-| **Validation Set** | 1,558 images (15.0%) |
-| **Test Set (Held-Out)** | 1,561 images (15.0%) |
-| **Indian Road Scenes** | **4,092 images (39.4%)** (Primary geographic anchor) |
-| **Supplementary Scenes** | 6,297 images (60.6%) (Japan & Czech vehicle-facing runs) |
-| **Pothole Annotations** | **6,233 bounding boxes** (Class 0) |
-| **Alligator Crack Annotations** | **8,358 bounding boxes** (Class 1) |
-| **Total Defect Annotations** | **14,591 verified bounding boxes** |
-| **Curated Negative Frames** | 1,598 images (15.4%) (Normal pavement to suppress false positives) |
-| **Deduplication Report** | 89 duplicate/near-duplicate frames purged via SHA-256 and pHash |
+1. Open this folder in VS Code.
+2. **Ctrl+Shift+B** → runs *Start everything* (backend + dashboard in two terminals).
+3. Open http://localhost:5173 — dashboard.
+   http://localhost:8000/docs — API documentation (try every endpoint from the browser).
 
----
-
-## 4. Repository Structure
+Manually instead:
 
 ```
-├── dataset/
-│   └── RoadDamage20K/
-│       ├── data.yaml                  # Ultralytics dataset configuration
-│       ├── DATASET_REPORT.md          # 18-section comprehensive dataset audit
-│       ├── images/                    # train / val / test split images
-│       ├── labels/                    # train / val / test YOLO txt annotations
-│       ├── metadata/                  # 8 CSV manifests (IMAGE_PROVENANCE.csv, etc.)
-│       └── qa/visual_samples/         # 150 contact QA images with rendered boxes
-│
-├── pipeline/
-│   ├── config.py                      # Global configuration and path constants
-│   ├── 01_download_sources.py         # RDD2020 and external source downloader
-│   ├── 02_convert_and_filter.py       # Pascal VOC / mask conversion to YOLO
-│   ├── 03_dedup_and_split.py          # SHA-256 / pHash dedup and sequence grouping
-│   ├── 04_qa_and_reports.py           # QA visualizer, provenance generator, report writer
-│   ├── 05_refactor_notebook.py        # Automated notebook generator
-│   └── package_dataset.py             # Packaging utility for RoadDamage20K.zip
-│
-├── downstream_prototype/
-│   ├── track_and_severity.py          # ByteTrack tracking & severity estimation
-│   └── sample_municipal_payload.json  # 16 realistic municipal test detections
-│
-├── backend/
-│   ├── main.py                        # FastAPI application with REST endpoints
-│   ├── database.py                    # Dual-engine SQLite & MongoDB adapter
-│   ├── models.py                      # Pydantic data schemas
-│   ├── requirements.txt               # Backend dependencies (fastapi, uvicorn)
-│   └── README.md                      # Backend service documentation
-│
-├── frontend/
-│   ├── index.html                     # Municipal triage & geospatial dashboard
-│   ├── styles.css                     # Modern dark glassmorphism styling
-│   └── app.js                         # Leaflet map, filters, modal, and dual-mode sync
-│
-├── real_world_test/                   # 25 unannotated real-world evaluation images
-├── Untitled1.ipynb                    # 13-section Google Colab training notebook
-├── Road_Damage_YOLO11_Training.ipynb  # Mirror copy of Colab notebook
-├── RoadDamage20K.zip                  # Packaged training archive for Google Drive
-└── requirements.txt                   # Project-level dependencies
+cd backend   &&  python -m uvicorn main:app --reload --port 8000
+cd dashboard &&  npm run dev
 ```
 
----
+MongoDB must be running (Windows service "MongoDB", database `road_damage`).
 
-## 5. Quick Start Guide
+## Dashboard pages
 
-### Step 1: Environment Setup
-Ensure Python 3.10+ is installed:.
+- **Dashboard** – totals, high-hazard count, map, priority list, severity / status / zone / trend charts
+- **Road Map** – all incidents on OpenStreetMap, colour = severity, click → inspect
+- **Repair Worklist** – priority-sorted table, change status inline
+- **Incident page** – annotated photo(s), GPS, history timeline, assign team + status (Inspect & Dispatch)
+- **Detect Damage** – upload a road photo → YOLO11 detection → saved as incident (GPS from photo EXIF or browser)
+- **Reports** – PDF / CSV export with filters, demo data, reload model
 
-```powershell
-pip install -r requirements.txt
-pip install -r backend/requirements.txt
+## Live Patrol (phone camera) — Module 5
+
+1. VS Code → Terminal → Run Task → **Start everything (phone / live patrol)**
+   (dashboard runs on **https** because phones only allow camera + GPS on secure pages).
+2. Phone on the same Wi-Fi / hotspot → open `https://<laptop-ip>:5173/live`
+   (laptop IP: `ipconfig` → Wi-Fi → IPv4). Accept the certificate warning
+   (Advanced → Proceed) — it is the laptop's own self-signed certificate.
+3. Press **Start patrol**, allow camera + location, point at the road.
+
+Pipeline per frame: YOLO11 → ByteTrack (`backend/bytetrack_road.yaml`) → severity → GPS → MongoDB.
+An incident is saved **once per tracked damage** (seen in ≥ 3 frames, confidence ≥ 0.35), not once per frame.
+
+Recorded video instead of live:
+
+```
+cd scripts
+python process_video.py --video road.mp4 --lat 16.6985 --lng 74.2335
+python process_video.py --video road.mp4 --gps road_gps.csv      # CSV: seconds,lat,lng
 ```
 
-### Step 2: Training the YOLO11 Model on Google Colab (Recommended)
-1. Upload `RoadDamage20K.zip` to your Google Drive root or working directory.
-2. Open `Untitled1.ipynb` in Google Colab.
-3. Select a GPU runtime (**Runtime $\rightarrow$ Change runtime type $\rightarrow$ T4 GPU**).
-4. Run all cells sequentially. The notebook will:
-   - Verify GPU acceleration.
-   - Auto-mount Google Drive and extract `RoadDamage20K.zip`.
-   - Verify class mappings and coordinate integrity.
-   - Train YOLO11 Nano for 50 epochs (`imgsz=640`, `batch=16`).
-   - Output per-class metrics ($mAP_{50}$, $mAP_{50-95}$, Precision, Recall).
-   - Evaluate on the held-out test split.
-   - Run batch prediction on `real_world_test/`.
-   - Export production model weights (`best.pt`).
-5. Download the resulting `best.pt` into the `runs/` or `backend/` directory.
+Annotated video with track IDs is written to `runs/videos/`.
 
-### Step 3: Run Live Vehicle Tracking & Severity Assessment
-To run the downstream tracker on an image folder, video file, or webcam feed:
-```powershell
-python downstream_prototype/track_and_severity.py --source real_world_test --conf 0.25
-```
-This performs:
-1. YOLO11 detection for `pothole` and `alligator_crack`.
-2. Multi-object ByteTrack tracking to deduplicate instances across frames.
-3. Severity estimation (`Low`, `Medium`, `High`) based on normalized bounding box area.
-4. Export of structured municipal telemetry to `downstream_prototype/sample_municipal_payload.json`.
+**GPU note:** while training runs, backend detection uses the CPU (`INFER_DEVICE` in `backend/config.py`).
+Sharing the 8 GB GPU with training caused an out-of-memory crash. After training, set it to `"0"`.
 
-### Step 4: Launch the FastAPI Backend
-Start the municipal reporting server:
-```powershell
-cd backend
-uvicorn main:app --reload --port 8000
-```
-- API Base: `http://localhost:8000`
-- Interactive Swagger UI: `http://localhost:8000/docs`
-- Health Endpoint: `http://localhost:8000/`
+## Key backend logic
 
-### Step 5: Open the RoadCare AI Municipal Dashboard
-- Simply double-click `frontend/index.html` or open it in any web browser.
-- The dashboard automatically detects if the FastAPI server is running on `http://localhost:8000`.
-  - **If Backend is Online**: Syncs live defect telemetry directly with SQLite/MongoDB.
-  - **If Backend is Offline**: Seamlessly operates in local standalone mode with built-in telemetry and `localStorage` persistence.
-- Features:
-  - **Geographic Map**: Click pins to inspect damage severity, confidence, and location.
-  - **Triage Worklist**: Filter by defect class, severity, or repair status.
-  - **Contractor Dispatch Modal**: Review dashcam visualizer, assign contractors, record engineering notes, and open GPS coordinates directly in Google Maps.
-  - **Municipal Export**: Download filtered inspection data as standard JSON.
+- `severity.py` – score = √(box area) × perspective factor; per-class thresholds calibrated on 21k training boxes
+- `main.py: upsert_incident` – same damage type within 15 m that is not yet repaired is **merged** into
+  the existing incident (reports_count +1) instead of creating a duplicate
+- `zones.py` – approximate Kolhapur zone centres; incident → nearest zone
+- `seed_demo.py` – demo incidents (flagged `demo: true`, removable from Reports page)
 
----
+## After training finishes
 
-## 6. Academic Deliverables, Figures & Viva Presentation
-
-This project includes complete final-year academic and defense materials:
-
-1. **Thesis Report & Viva Defense Document**:
-   - [`PROJECT_REPORT_AND_VIVA_GUIDE.md`](file:///c:/Users/shree/Downloads/POTHOLE/PROJECT_REPORT_AND_VIVA_GUIDE.md): 12 comprehensive chapters with full mathematical formulations (C3k2 blocks, SPPF, CIoU/DFL losses, ByteTrack Kalman filtering) and **25 in-depth technical viva voce examination questions with model answers**.
-2. **Interactive Presentation Slide Deck**:
-   - Open [`presentation/index.html`](file:///c:/Users/shree/Downloads/POTHOLE/presentation/index.html) in any web browser. Press **F11** for a 16:9 full-screen presentation deck with keyboard arrow navigation for your final-year project defense.
-3. **Publication-Quality Thesis Charts** (`dataset/RoadDamage20K/qa/reports/charts/`):
-   - `01_class_distribution.png`: Ground-truth annotation balance.
-   - `02_geographic_sources.png`: Geographic breakdown (39.4% Indian roads).
-   - `03_dataset_splits.png`: Zero video frame leakage sequence partitioning.
-   - `04_inference_throughput_fps.png`: Hardware latency benchmarks across platforms.
-   - `05_severity_heuristics.png`: Decision boundaries for area-based municipal triage.
-
----
-
-## 7. Academic Citation & Attribution
-
-If using this codebase for academic research, please cite:
-
-```bibtex
-@dataset{rdd2020_dataset,
-  author    = {Arya, Deeksha and Maeda, Hiroya and Ghosh, Sanjay Kumar and Toshniwal, Durga and Mraz, Alexander and Kashiyama, Takehiro and Sekimoto, Yoshihide},
-  title     = {Global Road Damage Detection: State-of-the-art Solutions and Global Road Damage Detection Challenge (RDD2020)},
-  journal   = {Big Data Analytics},
-  year      = {2020},
-  doi       = {10.17632/5ty2wb6gvg.1}
-}
-```
+1. Reports page → **Reload model** (or `POST /api/model/reload`).
+2. Copy the final weights to `models/final.pt` to mark the model as final.

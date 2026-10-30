@@ -1,0 +1,7 @@
+path: F:/POTHOLE_PROJECT/dataset
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names: ['pothole', 'alligator_crack']
