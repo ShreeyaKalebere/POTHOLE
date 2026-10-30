@@ -1,0 +1,9 @@
+# v8: CLEANED public data (tiny boxes removed, Norway/Czech dropped, Japan halved,
+#     duplicates + confident class errors fixed) + checked Kolhapur frames. Test set unchanged.
+path: dataset
+train: [images/train_clean, images/train_kol_v7]
+val: images/val_clean
+test: images/test
+
+nc: 2
+names: ['pothole', 'alligator_crack']

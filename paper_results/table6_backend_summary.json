@@ -1,0 +1,9 @@
+{
+ "zone_rule_correct": "20/20",
+ "post_success": "50/50",
+ "patch_success": "20/20",
+ "latency_ms_mean": 4513.6,
+ "latency_ms_median": 4369.3,
+ "latency_samples": 49,
+ "latency_definition": "POST /api/detect sent -> incident returned by GET /api/incidents/{id}; includes upload, CPU inference (GPU busy with training), DB write. No tracking."
+}

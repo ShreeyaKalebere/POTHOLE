@@ -20,7 +20,7 @@ import psutil
 ROOT = Path("F:/POTHOLE_PROJECT")
 SCRIPT = sys.argv[2] if len(sys.argv) > 2 else "train.py"
 LOG = ROOT / (sys.argv[3] if len(sys.argv) > 3 else "train_yolo11s.log")
-RUN = {"train.py": "yolo11s_v1", "train_v2.py": "yolo11s_v2_960", "train_v3.py": "yolo11s_v3_aug", "train_v4.py": "yolo11s_v4_fixed", "train_v5p.py": "yolo11s_v5_kolpseudo", "train_v6.py": "yolo11s_v6_kolreview", "train_v7.py": "yolo11s_v7_kolfixed"}.get(SCRIPT, "yolo11s_v1")
+RUN = {"train.py": "yolo11s_v1", "train_v2.py": "yolo11s_v2_960", "train_v3.py": "yolo11s_v3_aug", "train_v4.py": "yolo11s_v4_fixed", "train_v5p.py": "yolo11s_v5_kolpseudo", "train_v6.py": "yolo11s_v6_kolreview", "train_v7.py": "yolo11s_v7_kolfixed", "train_v8.py": "yolo11s_v8_clean", "train_v8m.py": "yolo11m_v8_clean"}.get(SCRIPT, "yolo11s_v1")
 SCRIPTS = ROOT / "scripts"
 WORKERS = sys.argv[1] if len(sys.argv) > 1 else "4"
 STALL_MIN = 8

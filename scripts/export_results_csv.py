@@ -3,7 +3,7 @@ import csv, re
 from pathlib import Path
 ROOT = Path("F:/POTHOLE_PROJECT")
 RUNS = {"yolo11s_v1": "v1 (640px, baseline)", "yolo11s_v2_960": "v2 (960px + Indian x2)",
-        "yolo11s_v3_aug": "v3 (rain/night/blur aug)", "yolo11s_v4_fixed": "v4 (fixed labels)", "yolo11s_v5_kolpseudo": "v5p (Kolhapur pseudo-labels)", "yolo11s_v6_kolreview": "v6 (Kolhapur reviewed boxes)", "yolo11s_v7_kolfixed": "v7 (Kolhapur + Codex checked)"}
+        "yolo11s_v3_aug": "v3 (rain/night/blur aug)", "yolo11s_v4_fixed": "v4 (fixed labels)", "yolo11s_v5_kolpseudo": "v5p (Kolhapur pseudo-labels)", "yolo11s_v6_kolreview": "v6 (Kolhapur reviewed boxes)", "yolo11s_v7_kolfixed": "v7 (Kolhapur + Codex checked)", "yolo11s_v8_clean": "v8 (cleaned data + Kolhapur)", "yolo11m_v8_clean": "v8m (YOLO11m, cleaned data + Kolhapur)"}
 
 # 1. test-set comparison, parsed from qa/evaluation_<run>.md
 rows = []

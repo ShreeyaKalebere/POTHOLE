@@ -1,0 +1,12 @@
+﻿set,split,images,pothole_boxes(class0),alligator_crack_boxes(class1),negative_images(empty label)
+base dataset (data.yaml: v1-v7 val/test),train,12597,13464,7719,1465
+base dataset (data.yaml: v1-v7 val/test),val,2692,3112,1664,319
+base dataset (data.yaml: v1-v7 val/test),test,2652,2726,1601,339
+v8 cleaned (data_v8.yaml),train_clean,9625,10262,5138,1239
+v8 cleaned (data_v8.yaml),val_clean,2475,2608,1584,281
+clean test (data_cleantest.yaml),test_clean,2437,2229,1517,296
+Kolhapur frames - model pre-labels (NOT human-verified),train pool (morning rides),2345,907,17,1662
+Kolhapur frames - model pre-labels (NOT human-verified),test pool (afternoon ride),469,128,1,370
+"Kolhapur train frames - reviewed labels (train_fixed, used in v7/v8)",train pool,2345,301,0,2121
+Kolhapur images in training set (incl. 3x repeats),train_kol_reviewed,852,861,0,213
+Kolhapur images in training set (incl. 3x repeats),train_kol_v7,896,903,0,224

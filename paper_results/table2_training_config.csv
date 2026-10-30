@@ -1,0 +1,5 @@
+﻿run,epochs_completed,train_hours(sum of logged time),model,data,epochs,patience,batch,imgsz,optimizer,lr0,lrf,cos_lr,warmup_epochs,momentum,weight_decay,mosaic,close_mosaic,mixup,hsv_h,hsv_s,hsv_v,degrees,translate,scale,fliplr,flipud,workers,device,amp,seed
+yolo11s_v1,107,6.92,F:\POTHOLE_PROJECT\runs\yolo11s_v1\weights\last.pt,F:\POTHOLE_PROJECT\dataset\data.yaml,150,20,16,640,auto,0.01,0.01,True,3.0,0.937,0.0005,1.0,10,0.1,0.015,0.6,0.5,3.0,0.1,0.5,0.5,0.0,4,0,True,0
+yolo11s_v6_kolreview,10,0.5,F:\POTHOLE_PROJECT\models\final.pt,F:\POTHOLE_PROJECT\dataset\data_v6.yaml,10,10,16,640,SGD,0.002,0.1,True,0.5,0.937,0.0005,1.0,3,0.1,0.015,0.6,0.5,3.0,0.1,0.5,0.5,0.0,2,0,True,0
+yolo11s_v8_clean,19,0.75,F:\POTHOLE_PROJECT\runs\yolo11s_v8_clean\weights\last.pt,F:\POTHOLE_PROJECT\dataset\data_v8.yaml,20,10,16,640,SGD,0.002,0.1,True,0.5,0.937,0.0005,1.0,5,0.1,0.015,0.6,0.5,3.0,0.1,0.5,0.5,0.0,2,0,True,0
+yolo11m_v8_clean,15,1.25,yolo11m.pt,F:\POTHOLE_PROJECT\dataset\data_v8.yaml,40,12,12,640,auto,0.01,0.01,True,3.0,0.937,0.0005,1.0,10,0.1,0.015,0.6,0.5,3.0,0.1,0.5,0.5,0.0,2,0,True,0

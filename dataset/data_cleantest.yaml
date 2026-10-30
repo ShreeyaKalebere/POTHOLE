@@ -1,0 +1,9 @@
+# CLEAN TEST SET - same rules as training cleaning: boxes < 0.1% of the image removed,
+# RDD Norway + Czech images excluded. Report ALONGSIDE the full test set, never instead of it.
+path: dataset
+train: images/test_clean
+val: images/test_clean
+test: images/test_clean
+
+nc: 2
+names: ['pothole', 'alligator_crack']

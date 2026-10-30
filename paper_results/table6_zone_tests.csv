@@ -1,0 +1,24 @@
+﻿test,case,"lat,lng",expected,assigned,correct
+zone,zone centre,"16.730000,74.237000",Kasaba Bawada,Kasaba Bawada,True
+zone,zone centre,"16.714500,74.238000",Tarabai Park,Tarabai Park,True
+zone,zone centre,"16.717000,74.256000",Kadamwadi,Kadamwadi,True
+zone,zone centre,"16.704000,74.242000",Shahupuri,Shahupuri,True
+zone,zone centre,"16.696700,74.251000",Rajarampuri,Rajarampuri,True
+zone,zone centre,"16.696000,74.230000",Mangalwar Peth,Mangalwar Peth,True
+zone,zone centre,"16.693000,74.224000",Shivaji Peth,Shivaji Peth,True
+zone,zone centre,"16.689000,74.239000",Jawahar Nagar,Jawahar Nagar,True
+zone,zone centre,"16.690000,74.260000",Ruikar Colony,Ruikar Colony,True
+zone,zone centre,"16.660000,74.270000",Ujalaiwadi,Ujalaiwadi,True
+zone,150 m from centre,"16.731347,74.237000",Kasaba Bawada,Kasaba Bawada,True
+zone,150 m from centre,"16.714500,74.236593",Tarabai Park,Tarabai Park,True
+zone,150 m from centre,"16.715653,74.256000",Kadamwadi,Kadamwadi,True
+zone,150 m from centre,"16.705347,74.242000",Shahupuri,Shahupuri,True
+zone,150 m from centre,"16.698047,74.251000",Rajarampuri,Rajarampuri,True
+zone,outside (~16 km north),"16.850000,74.243300",Outside City,Outside City,True
+zone,outside (~16 km south),"16.560000,74.243300",Outside City,Outside City,True
+zone,outside (~17 km east),"16.705000,74.400000",Outside City,Outside City,True
+zone,outside (~15 km west),"16.705000,74.100000",Outside City,Outside City,True
+zone,outside (Pune),"18.520400,73.856700",Outside City,Outside City,True
+zone,edge midpoint (no ground truth),"16.722250,74.237500",either: Kasaba Bawada | Tarabai Park,Kasaba Bawada,n/a
+zone,edge midpoint (no ground truth),"16.715750,74.247000",either: Tarabai Park | Kadamwadi,Kadamwadi,n/a
+zone,edge midpoint (no ground truth),"16.710500,74.249000",either: Kadamwadi | Shahupuri,Kadamwadi,n/a

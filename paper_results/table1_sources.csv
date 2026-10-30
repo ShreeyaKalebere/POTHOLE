@@ -1,0 +1,8 @@
+﻿source,train,val,test,total
+RDD2022 (all countries),8540,1829,1824,12193
+RoboflowIIT,1795,384,384,2563
+BharatPotHole,900,200,171,1271
+IndianRoads,640,137,137,914
+Pothole600,434,80,75,589
+Biankatpas,196,42,42,280
+UrbanCivic_no,92,20,19,131
