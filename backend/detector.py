@@ -78,6 +78,7 @@ class Detector:
         self.model = None
         self.model_path = None
         self.loaded_at = None
+        self.imgsz = 640
         self._lock = threading.Lock()
 
     def load(self):
@@ -87,12 +88,15 @@ class Detector:
             self.model = YOLO(str(local))
             self.model_path = str(src)
             self.loaded_at = time.time()
+            # Inference must use the resolution the weights were trained at - a 768 px model loses
+            # accuracy when it is fed 640 px images (and picks up small potholes it would miss).
+            self.imgsz = int(((self.model.ckpt or {}).get("train_args") or {}).get("imgsz", 640))
         return self.info()
 
     def info(self):
         return {"loaded": self.model is not None, "weights": self.model_path,
                 "provisional": bool(self.model_path and "final.pt" not in self.model_path),
-                "loaded_at": self.loaded_at}
+                "imgsz": self.imgsz, "loaded_at": self.loaded_at}
 
     def detect(self, image_path, conf=CONF_THRESHOLD):
         if self.model is None:
@@ -103,7 +107,7 @@ class Detector:
         H, W = img.shape[:2]
         t0 = time.time()
         with self._lock:
-            res = self.model.predict(img, conf=conf, device=INFER_DEVICE, verbose=False)[0]
+            res = self.model.predict(img, conf=conf, imgsz=self.imgsz, device=INFER_DEVICE, verbose=False)[0]
         ms = (time.time() - t0) * 1000
 
         return boxes_to_dets(res, W, H), img, round(ms, 1)

@@ -14,6 +14,11 @@ photos and live phone video, estimates severity, records GPS, and gives municipa
 | v4 | label fixes | 0.626 | 0.682 | 0.572 |
 | v5 | Kolhapur model pseudo-labels | 0.618 | 0.667 | 0.575 |
 | **v6** (deployed) | Kolhapur frames, boxes reviewed | 0.623 | **0.690** | 0.567 |
+| v8 | cleaned data (tiny boxes, Norway/Czech removed) | 0.600 | 0.659 | 0.557 |
+
+Stopped early, not evaluated on test: YOLO11m (v8m, 30/40 epochs, best val mAP@50 0.524),
+v9 (YOLO11m 768 px, 3/50 epochs), v10 (YOLO11s 768 px, 4/18 epochs; its val set is inside its training data).
+All runs land between 0.60 and 0.64 on the test set - see `qa/ACCURACY_AUDIT.md` / `qa/audit_summary.md`.
 
 - Speed: ~10 ms / image on RTX 4060 (≈100 FPS), ~105 ms on CPU. Model size 19 MB.
 - Kolhapur field test (469 frames, 27 Oct 2026): v6 found ~24% more real damage than v1.

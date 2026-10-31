@@ -36,6 +36,7 @@ class TrackSession:
         from ultralytics import YOLO
         local, src = current_weights()
         self.model = YOLO(str(local))     # own model instance = own tracker state
+        self.imgsz = int(((self.model.ckpt or {}).get("train_args") or {}).get("imgsz", 640))
         self.weights = str(src)
         self.id = uuid.uuid4().hex[:10]
         self.source = source
@@ -51,8 +52,8 @@ class TrackSession:
         """Runs detection + tracking on one frame. Returns (detections, newly_saved)."""
         with self.lock:
             t0 = time.time()
-            res = self.model.track(img, persist=True, tracker=TRACKER_CFG, conf=TRACK_CONF, device=INFER_DEVICE,
-                                   verbose=False)[0]
+            res = self.model.track(img, persist=True, tracker=TRACKER_CFG, conf=TRACK_CONF,
+                                   imgsz=self.imgsz, device=INFER_DEVICE, verbose=False)[0]
             H, W = img.shape[:2]
             dets = [d for d in boxes_to_dets(res, W, H)]
             self.frames += 1
