@@ -15,3 +15,8 @@ dashboard/dist/
 __pycache__/
 *.pyc
 .env
+dataset_verified/
+manual_labeling/batches/
+manual_labeling/POTHOLEDATASET/
+manual_labeling/_frozen_files/
+*.db

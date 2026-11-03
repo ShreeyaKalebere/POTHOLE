@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Road Damage Label Verifier · Professional Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">🛣️</div>
+    <span>Road Damage Verifier</span>
+    <span class="brand-pill">STUDIO v2.0</span>
+  </div>
+
+  <nav>
+    <button data-tab="label" class="tab active">
+      <span>🏷️</span>
+      <span>Label</span>
+    </button>
+    <button data-tab="browse" class="tab">
+      <span>🔍</span>
+      <span>Browse</span>
+    </button>
+    <button data-tab="data" class="tab">
+      <span>⚙️</span>
+      <span>Datasets &amp; Tools</span>
+    </button>
+  </nav>
+
+  <select id="dataset" title="Dataset / batch folder"></select>
+
+  <div class="progress" title="Checked images in this dataset">
+    <div class="bar"><div id="progFill"></div></div>
+    <span id="progText">–</span>
+  </div>
+
+  <label class="who">
+    <span>👤 Operator</span>
+    <input id="user" placeholder="e.g. Shreeya" maxlength="30">
+  </label>
+</header>
+
+<!-- ======================= TAB 1: LABEL EDITOR ======================= -->
+<section id="tab-label" class="page active">
+  <div class="stage-wrapper">
+    <div id="stage">
+      <div class="stage-hud">
+        <div class="hud-pill" id="hudZoom">Zoom: 100%</div>
+        <div class="hud-pill" id="hudBoxes">0 Boxes</div>
+        <button class="hud-pill" id="hudFitBtn" onclick="fit()" style="cursor:pointer;" title="Fit image to screen (F)">⛶ Fit (F)</button>
+      </div>
+      <canvas id="cv"></canvas>
+      <div id="empty" class="hidden"></div>
+    </div>
+
+    <!-- Bottom Thumbnail Timeline / Filmstrip -->
+    <div class="filmstrip-panel">
+      <div class="filmstrip-header-info">
+        <span class="filmstrip-title">Frames</span>
+        <span class="filmstrip-counter" id="stripCounter">–</span>
+      </div>
+      <button class="strip-btn" id="bStripPrev" title="Scroll earlier frames (or press A for previous)">◀</button>
+      <div class="filmstrip" id="filmstrip">
+        <!-- Thumbnails populated dynamically -->
+      </div>
+      <button class="strip-btn" id="bStripNext" title="Scroll later frames (or press D for next)">▶</button>
+    </div>
+  </div>
+
+  <aside>
+    <!-- Navigation & Metadata Card -->
+    <div class="card">
+      <div class="label">
+        <span>Browse Mode</span>
+        <span class="muted small">Filter sequence</span>
+      </div>
+      <select id="mode" title="Which images Prev / Next walk through">
+        <option value="unverified">⚡ Mode: Not yet checked</option>
+        <option value="all">📁 Browse: All images</option>
+        <option value="verified">🕳️ Browse: Damaged road</option>
+        <option value="negative">✨ Browse: No damage (Clean)</option>
+        <option value="skipped">⏭️ Browse: Skipped</option>
+      </select>
+      <div id="info" class="small" style="margin-top:10px; line-height:1.6;">–</div>
+      <div id="hint" class="hint hidden"></div>
+    </div>
+
+    <!-- Classes & Box Inspector Card -->
+    <div class="card">
+      <div class="label">
+        <span>Class for new boxes</span>
+        <span class="muted small">Keys [1] &amp; [2]</span>
+      </div>
+      <div class="classes">
+        <button class="cls c0 active" data-c="0">
+          <span>🕳️ Pothole</span>
+          <kbd>1</kbd>
+        </button>
+        <button class="cls c1" data-c="1">
+          <span>⚡ Crack</span>
+          <kbd>2</kbd>
+        </button>
+      </div>
+
+      <div class="label">
+        <span>Active Boxes <span id="nbox" class="muted"></span></span>
+        <span id="srcTag" class="srctag"></span>
+      </div>
+      <ul id="boxes"></ul>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="bAI" class="ai" title="Run the trained YOLO model on this image">
+          <span>🤖 AI Label</span>
+          <kbd>I</kbd>
+        </button>
+        <button id="bReset" class="ghost" title="Throw away edits and show the original label again">
+          <span>↺ Original</span>
+          <kbd>R</kbd>
+        </button>
+      </div>
+
+      <div class="row between" style="align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid var(--border-subtle);">
+        <span class="small muted">AI Conf Threshold ≥</span>
+        <input id="conf" type="number" value="0.30" min="0.05" max="0.95" step="0.05" style="width:68px; padding:4px 8px; border-radius:6px; border:1px solid var(--border-card); background:var(--bg-input); color:#fff; font-family:var(--font-mono); font-size:0.8rem; text-align:center;">
+      </div>
+    </div>
+
+    <!-- Verification Decision Actions Card -->
+    <div class="card actions">
+      <button id="bSave" class="primary" title="Confirm boxes and advance">
+        <span>✓ Save &amp; Next</span>
+        <kbd>Enter</kbd>
+      </button>
+
+      <button id="bNeg" class="neg" title="Mark this frame clean with no damage">
+        <span>🧹 No Damage (Clean Road)</span>
+        <kbd>N</kbd>
+      </button>
+
+      <div class="row">
+        <select id="skipReason" title="Reason for skipping">
+          <option value="blurry">Blurry / Dark</option>
+          <option value="not road">Not a road</option>
+          <option value="duplicate">Duplicate frame</option>
+          <option value="screenshot">Text / Artifact</option>
+          <option value="unsure">Unsure</option>
+        </select>
+        <button id="bSkip" class="skip" title="Skip this frame">
+          <span>Skip</span>
+          <kbd>S</kbd>
+        </button>
+      </div>
+
+      <button id="bDelete" class="del" title="Remove this image from dataset (restorable)">
+        <span>🗑 Delete image</span>
+        <kbd>X</kbd>
+      </button>
+
+      <div class="row">
+        <button id="bPrev">
+          <span>◀ Prev</span>
+          <kbd>A</kbd>
+        </button>
+        <button id="bNext">
+          <span>Next ▶</span>
+          <kbd>D</kbd>
+        </button>
+      </div>
+
+      <div class="row">
+        <button id="bClear" class="ghost">Clear boxes</button>
+        <button id="bUncheck" class="ghost" title="Revert to unchecked status">Uncheck</button>
+      </div>
+
+      <div id="msg"></div>
+    </div>
+
+    <!-- Quick Help & Shortcuts -->
+    <details class="card help">
+      <summary>⌨️ Keyboard Shortcuts &amp; Guide</summary>
+      <ul class="small">
+        <li><b><kbd>Enter</kbd></b>: Save current boxes and go to next image.</li>
+        <li><b><kbd>N</kbd></b>: No damage (clean road) — clears boxes and saves.</li>
+        <li><b><kbd>I</kbd></b>: Run trained YOLO model to auto-detect damage.</li>
+        <li><b><kbd>1</kbd> / <kbd>2</kbd></b>: Switch class (Pothole / Alligator Crack).</li>
+        <li><b>Click box + <kbd>Del</kbd></b>: Delete selected box.</li>
+        <li><b>Click &amp; Drag</b>: Draw a new box anywhere.</li>
+        <li><b>Corner handles</b>: Drag corners to tighten boxes.</li>
+        <li><b><kbd>A</kbd> / <kbd>D</kbd></b> or arrows: Previous / Next image.</li>
+        <li><b><kbd>X</kbd></b>: Delete image (Undo available immediately).</li>
+        <li><b>Mouse Wheel</b>: Zoom in/out at cursor.</li>
+        <li><b>Right Drag / Middle Drag</b>: Pan image.</li>
+        <li><b><kbd>F</kbd></b>: Fit to screen &middot; <b><kbd>H</kbd></b>: Toggle hide boxes.</li>
+      </ul>
+    </details>
+  </aside>
+</section>
+
+<!-- ======================= TAB 2: BROWSE GRID ======================= -->
+<section id="tab-browse" class="page">
+  <div class="toolbar">
+    <select id="bf">
+      <option value="all">📁 All Images</option>
+      <option value="unverified">⚡ Not yet checked</option>
+      <option value="verified">🕳️ Checked: Has damage</option>
+      <option value="negative">✨ Checked: Clean road</option>
+      <option value="skipped">⏭️ Skipped</option>
+      <option value="has_damage">📦 With boxes</option>
+      <option value="empty_road">🚫 Without boxes</option>
+      <option value="deleted">🗑 Deleted images</option>
+    </select>
+    <input id="search" placeholder="Search filename..." style="width:240px">
+    <span id="bcount" class="muted small"></span>
+    <span class="spacer"></span>
+    <button id="pgPrev">◀ Prev</button>
+    <span id="pgText" class="small muted" style="font-family:var(--font-mono); margin:0 8px;"></span>
+    <button id="pgNext">Next ▶</button>
+  </div>
+  <div id="grid"></div>
+</section>
+
+<!-- ======================= TAB 3: DATASETS & TOOLS ======================= -->
+<section id="tab-data" class="page">
+  <div class="cols">
+    <!-- Datasets List -->
+    <div class="card wide">
+      <h3>
+        <span>📁 Datasets &amp; Batches</span>
+        <span class="muted small">(Click any row to switch active dataset)</span>
+      </h3>
+      <div class="tablewrap"><table id="dsTable"></table></div>
+    </div>
+
+    <!-- AI Batch Labeling -->
+    <div class="card">
+      <h3>🤖 Batch AI Labeling</h3>
+      <p class="small">Runs the YOLO model on this dataset in the background. Checked images are never overwritten. "Original" can restore any image.</p>
+      <label class="radio small">
+        <input type="radio" name="aimode" value="missing" checked>
+        <span>Only images with <b>no label at all</b></span>
+      </label>
+      <label class="radio small">
+        <input type="radio" name="aimode" value="unverified">
+        <span><b>All unchecked</b> images (proposes model boxes)</span>
+      </label>
+      <div class="row" style="margin-top:12px;">
+        <button id="bAIBatch" class="ai">Start Batch AI</button>
+        <button id="bAIStop" class="ghost">Stop</button>
+      </div>
+      <pre id="aiLog"></pre>
+    </div>
+
+    <!-- LabelImg Integration -->
+    <div class="card">
+      <h3>✏️ LabelImg Offline Editor</h3>
+      <p class="small">Launches LabelImg with the current dataset (YOLO format). Edit boxes offline, save each frame (<kbd>Ctrl+S</kbd>), then click Accept below.</p>
+      <div class="row">
+        <button id="bLabelImg">Launch LabelImg</button>
+      </div>
+      <button id="bAccept" class="primary" style="margin-top:10px; width:100%;">Accept images saved in LabelImg</button>
+      <pre id="liLog"></pre>
+    </div>
+
+    <!-- Team & Export -->
+    <div class="card">
+      <h3>👥 Team Verification Stats</h3>
+      <table id="peopleTable"></table>
+
+      <h3 style="margin-top:20px;">📦 Export Clean YOLO Dataset</h3>
+      <p class="small">Exports verified damage + clean negative images into standard YOLO format split into train/val/test.</p>
+      <div class="row">
+        <button id="bExportOne">Export Active Dataset</button>
+        <button id="bExportAll" class="primary">Export All Datasets</button>
+      </div>
+      <pre id="exportLog"></pre>
+
+      <h3 style="margin-top:20px;">🗑 Deleted Trash Can</h3>
+      <p class="small">Soft-deleted images are kept safely in <code>_deleted_images</code> until emptied.</p>
+      <div class="row" style="align-items:center;">
+        <span id="delCount" class="small muted"></span>
+        <button id="bEmptyDel" class="del">Empty Trash</button>
+      </div>
+      <pre id="delLog"></pre>
+    </div>
+  </div>
+</section>
+
+<script src="app.js?v=3"></script>
+</body>
+</html>

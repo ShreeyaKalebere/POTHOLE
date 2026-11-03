@@ -20,6 +20,10 @@ Stopped early, not evaluated on test: YOLO11m (v8m, 30/40 epochs, best val mAP@5
 v9 (YOLO11m 768 px, 3/50 epochs), v10 (YOLO11s 768 px, 4/18 epochs; its val set is inside its training data).
 All runs land between 0.60 and 0.64 on the test set - see `qa/ACCURACY_AUDIT.md` / `qa/audit_summary.md`.
 
+In progress: v11 (YOLO11s, 640 px, fresh COCO-pretrained start) on a manually verified dataset of 20,698 images
+(train 14,595 / val 3,025 / test 3,078), built with the tool in `manual_labeling/`. Not yet evaluated on test;
+per-epoch validation numbers so far are in `results/yolo11s_v11_verified/results.csv`.
+
 - Speed: ~10 ms / image on RTX 4060 (≈100 FPS), ~105 ms on CPU. Model size 19 MB.
 - Kolhapur field test (469 frames, 27 Oct 2026): v6 found ~24% more real damage than v1.
 - All epoch-by-epoch numbers: `qa/results_all_epochs.csv`; graphs and confusion matrices: `results/`.
