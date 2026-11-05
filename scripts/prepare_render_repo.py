@@ -87,7 +87,11 @@ render_yaml = """services:
     region: singapore
     envVars:
       - key: MONGO_URI
-        value: mongodb+srv://pothole_admin:aTwRZO0bZZCLFIMK@cluster0.lag8x5i.mongodb.net/pothole_detection?retryWrites=true&w=majority
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: APP_SECRET
+        generateValue: true
       - key: DB_NAME
         value: pothole_detection
       - key: INFER_DEVICE

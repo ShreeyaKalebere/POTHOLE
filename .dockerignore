@@ -8,6 +8,7 @@
 !dashboard/index.html
 !dashboard/vite.config.js
 !dashboard/src/**
+!dashboard/dist/**
 !models/final.pt
 
 backend/media/**
