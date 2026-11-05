@@ -39,9 +39,9 @@ def to_pdf(items, stats, filters_text):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), leftMargin=12 * mm, rightMargin=12 * mm,
                             topMargin=12 * mm, bottomMargin=12 * mm,
-                            title="Road Damage Report - Kolhapur")
+                            title="MargDrishti Road Damage Report - Kolhapur")
     ss = getSampleStyleSheet()
-    el = [Paragraph("Road Damage Report &mdash; Kolhapur Municipal Corporation", ss["Title"]),
+    el = [Paragraph("MargDrishti Road Damage Report &mdash; Kolhapur Municipal Corporation", ss["Title"]),
           Paragraph(f"Generated {datetime.now():%d %b %Y, %H:%M} &nbsp;|&nbsp; Filters: {filters_text}",
                     ss["Normal"]), Spacer(1, 6 * mm)]
 

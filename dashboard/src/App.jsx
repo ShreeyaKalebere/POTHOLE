@@ -9,6 +9,7 @@ import Detect from "./pages/Detect.jsx";
 import Reports from "./pages/Reports.jsx";
 import LivePatrol from "./pages/LivePatrol.jsx";
 import Login from "./pages/Login.jsx";
+import logoUrl from "./assets/margdrishti_logo.svg";
 
 const NAV = [
   ["/", "Dashboard", "▦"],
@@ -66,9 +67,9 @@ function App({ authRequired, onLogout }) {
     <div className="shell">
       <aside className="side">
         <div className="brand">
-          <div className="logo">RD</div>
+          <img className="logo" src={logoUrl} alt="MargDrishti logo" />
           <div>
-            <div className="brand-title">Road Damage Monitor</div>
+            <div className="brand-title">MargDrishti</div>
             <div className="brand-sub">Kolhapur Municipal Corporation</div>
           </div>
         </div>

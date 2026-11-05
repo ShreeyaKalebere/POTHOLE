@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
+import logoUrl from "../assets/margdrishti_logo.svg";
 
 export default function Login({ onDone }) {
   const [pw, setPw] = useState("");
@@ -23,9 +24,9 @@ export default function Login({ onDone }) {
     <div className="login-wrap">
       <form className="card login" onSubmit={submit}>
         <div className="brand">
-          <div className="logo">RD</div>
+          <img className="logo" src={logoUrl} alt="MargDrishti logo" />
           <div>
-            <div className="brand-title dark">Road Damage Monitor</div>
+            <div className="brand-title dark">MargDrishti</div>
             <div className="muted small">Kolhapur Municipal Corporation</div>
           </div>
         </div>

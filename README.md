@@ -1,4 +1,6 @@
-# Computer Vision & Deep Learning Based Road Damage and Municipal Reporting System
+# MargDrishti
+
+Computer Vision & Deep Learning Based Road Damage and Municipal Reporting System
 
 Group G3 · DYPCET Kolhapur · Guide: Mrs. S. V. Shinge
 

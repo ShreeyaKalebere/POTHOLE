@@ -33,7 +33,7 @@ from reports import to_csv, to_pdf
 from severity import SEVERITY_RANK
 from zones import ZONES, CITY_CENTER, zone_for
 
-app = FastAPI(title="Road Damage & Municipal Reporting API", version="1.0")
+app = FastAPI(title="MargDrishti - Road Damage & Municipal Reporting API", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.middleware("http")(auth.middleware)
 

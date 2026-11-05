@@ -9,7 +9,7 @@ ROOT = Path("F:/POTHOLE_PROJECT")
 OUT = ROOT / "deploy" / "hf_space"
 
 README = """---
-title: Road Damage Monitor Kolhapur
+title: MargDrishti
 emoji: 🛣️
 colorFrom: blue
 colorTo: gray
