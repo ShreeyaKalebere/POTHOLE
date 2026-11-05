@@ -39,7 +39,7 @@ export default function IncidentDetail() {
     if (form.assigned_to !== (inc.assigned_to || "")) body.assigned_to = form.assigned_to;
     if (!body.status && body.assigned_to === undefined && !body.note) return;
     await api.update(id, body);
-    setMsg("Saved ✓");
+    setMsg("Saved");
     setTimeout(() => setMsg(""), 2000);
     load();
   };
@@ -48,7 +48,7 @@ export default function IncidentDetail() {
     <>
       <header className="page-head">
         <div>
-          <Link to="/worklist" className="muted small">← Worklist</Link>
+          <Link to="/worklist" className="muted small">Back to worklist</Link>
           <h1>
             {inc.incident_code} · {TYPE_LABEL[inc.damage_type]}
           </h1>
@@ -66,7 +66,7 @@ export default function IncidentDetail() {
           <div className="row gap small muted" style={{ marginTop: 8 }}>
             <span>Confidence {(img.confidence * 100).toFixed(0)}%</span>
             <span>· {fmtDate(img.at)}</span>
-            <a href={img.url} target="_blank" rel="noreferrer">Original photo ↗</a>
+            <a href={img.url} target="_blank" rel="noreferrer">Original photo</a>
           </div>
           {inc.images.length > 1 && (
             <div className="thumbs">
@@ -85,7 +85,7 @@ export default function IncidentDetail() {
               <dd>
                 {inc.lat != null ? (
                   <a href={`https://www.google.com/maps?q=${inc.lat},${inc.lng}`} target="_blank" rel="noreferrer">
-                    {inc.lat.toFixed(6)}, {inc.lng.toFixed(6)} ↗
+                    {inc.lat.toFixed(6)}, {inc.lng.toFixed(6)}
                   </a>
                 ) : "No GPS"}
               </dd>
@@ -99,7 +99,7 @@ export default function IncidentDetail() {
           </div>
 
           <div className="card">
-            <h3>Inspect &amp; dispatch</h3>
+            <h3>Inspect and dispatch</h3>
             <div className="form">
               <label>Status</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
@@ -115,7 +115,7 @@ export default function IncidentDetail() {
                 onChange={(e) => setForm({ ...form, note: e.target.value })} />
               <div className="row gap">
                 <button className="btn primary" onClick={save}>Save update</button>
-                <button className="btn danger" onClick={remove}>🗑 Delete incident</button>
+                <button className="btn danger" onClick={remove}>Delete incident</button>
                 <span className="ok-msg">{msg}</span>
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function IncidentDetail() {
         {inc.lat != null && (
           <div className="card">
             <h3>Location</h3>
-            <IncidentMap items={[inc]} height={260} />
+            <IncidentMap items={[inc]} height={260} touchPan={false} />
           </div>
         )}
         <div className="card">

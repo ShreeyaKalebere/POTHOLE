@@ -14,13 +14,13 @@ export default function MapPage({ zone }) {
     <>
       <header className="page-head">
         <div>
-          <h1>Interactive Road Map</h1>
-          <p className="muted">{items.length} incidents shown · click a marker to inspect</p>
+          <h1>Road map</h1>
+          <p className="muted">{items.length} incidents shown · select a marker to inspect</p>
         </div>
         <Filters f={f} setF={setF} />
       </header>
       <div className="card flush">
-        <IncidentMap items={items} height="calc(100vh - 170px)" />
+        <IncidentMap items={items} height="calc(100vh - 190px)" />
       </div>
     </>
   );

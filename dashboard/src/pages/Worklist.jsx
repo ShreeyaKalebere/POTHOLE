@@ -24,13 +24,13 @@ export default function Worklist({ zone }) {
     <>
       <header className="page-head">
         <div>
-          <h1>Repair Worklist</h1>
+          <h1>Repair worklist</h1>
           <p className="muted">Sorted by priority: open first, then severity, then number of reports</p>
         </div>
         <Filters f={f} setF={setF} show={["type", "severity", "status", "dates"]} />
       </header>
       <div className="card flush">
-        <table className="tbl">
+        <table className="tbl cards">
           <thead>
             <tr>
               <th>Code</th><th>Type</th><th>Severity</th><th>Zone</th><th>Reports</th>
@@ -41,18 +41,18 @@ export default function Worklist({ zone }) {
             {items.map((i) => (
               <tr key={i.id} className={i.status === "Repaired" ? "done" : ""}>
                 <td><b>{i.incident_code}</b>{i.demo && <span className="demo">demo</span>}</td>
-                <td><TypeTag t={i.damage_type} /></td>
+                <td data-label="Type"><TypeTag t={i.damage_type} /></td>
                 <td><SevBadge s={i.severity} /></td>
-                <td>{i.zone}</td>
-                <td className="num">{i.reports_count}</td>
-                <td>{i.assigned_to || <span className="muted">—</span>}</td>
-                <td className="nowrap">{fmtDate(i.detected_at)}</td>
-                <td>
-                  <select value={i.status} disabled={busy === i.id} onChange={(e) => setStatus(i, e.target.value)}>
+                <td data-label="Zone">{i.zone}</td>
+                <td className="num" data-label="Reports">{i.reports_count}</td>
+                <td data-label="Assigned to">{i.assigned_to || <span className="muted">Not assigned</span>}</td>
+                <td className="nowrap" data-label="Detected">{fmtDate(i.detected_at)}</td>
+                <td data-label="Status">
+                  <select aria-label={`Status of ${i.incident_code}`} value={i.status} disabled={busy === i.id} onChange={(e) => setStatus(i, e.target.value)}>
                     {STATUSES.map((s) => <option key={s}>{s}</option>)}
                   </select>
                 </td>
-                <td><Link to={`/incident/${i.id}`}>Inspect →</Link></td>
+                <td className="c-inspect"><Link to={`/incident/${i.id}`}>Inspect</Link></td>
               </tr>
             ))}
             {!items.length && (

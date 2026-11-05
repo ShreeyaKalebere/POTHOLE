@@ -166,9 +166,9 @@ export default function LivePatrol() {
   return (
     <div className="live">
       <div className="live-top">
-        <Link to="/" className="live-back">← Dashboard</Link>
-        <b>Live Patrol</b>
-        <span className={"live-pill " + (running ? "on" : "")}>{running ? "● LIVE" : "stopped"}</span>
+        <Link to="/" className="live-back">Dashboard</Link>
+        <b>Live patrol</b>
+        <span className={"live-pill " + (running ? "on" : "")}>{running ? "Live" : "Stopped"}</span>
       </div>
 
       <div className="live-stage">
@@ -192,7 +192,7 @@ export default function LivePatrol() {
               <div>{summary.frames} frames · {summary.tracks} damages tracked</div>
               <div>{summary.incidents_saved} new incidents · {summary.incidents_merged} merged</div>
               <div>avg {summary.avg_inference_ms} ms / frame</div>
-              <Link to="/worklist">Open worklist →</Link>
+              <Link to="/worklist">Open worklist</Link>
             </div>
           </div>
         )}
@@ -210,9 +210,9 @@ export default function LivePatrol() {
 
       <div className="live-controls">
         {!running ? (
-          <button className="btn primary big" onClick={start} disabled={!secure}>▶ Start patrol</button>
+          <button className="btn primary big" onClick={start} disabled={!secure}>Start patrol</button>
         ) : (
-          <button className="btn danger big" onClick={stop}>■ Stop</button>
+          <button className="btn danger big" onClick={stop}>Stop</button>
         )}
         <label className="check">
           <input type="checkbox" checked={save} disabled={running}

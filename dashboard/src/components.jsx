@@ -1,28 +1,24 @@
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import { Link } from "react-router-dom";
 import { useEffect } from "react";
-import { SEV_COLOR, STATUS_COLOR, TYPE_LABEL, fmtDate } from "./api";
+import { SEV_COLOR, TYPE_LABEL, fmtDate } from "./api";
 
 export const SevBadge = ({ s }) => (
-  <span className="badge" style={{ background: SEV_COLOR[s] + "22", color: SEV_COLOR[s] }}>
-    {s}
-  </span>
+  <span className={"badge sev-" + s}>{s}</span>
 );
 
 export const StatusBadge = ({ s }) => (
-  <span className="badge" style={{ background: STATUS_COLOR[s] + "22", color: STATUS_COLOR[s] }}>
-    {s}
-  </span>
+  <span className={"badge st-" + s.replace(" ", "-")}>{s}</span>
 );
 
 export const TypeTag = ({ t }) => <span className={"type " + t}>{TYPE_LABEL[t] || t}</span>;
 
-export function StatCard({ label, value, sub, accent }) {
+export function StatTile({ tone, value, label }) {
   return (
-    <div className="card stat" style={accent ? { borderTop: `3px solid ${accent}` } : undefined}>
-      <div className="stat-label">{label}</div>
-      <div className="stat-value">{value ?? "–"}</div>
-      {sub && <div className="stat-sub">{sub}</div>}
+    <div className={`tile ${tone}`}>
+      <div className="tile-value">{value ?? "–"}</div>
+      <div className="tile-label">{label}</div>
     </div>
   );
 }
@@ -39,10 +35,13 @@ function FitBounds({ items }) {
   return null;
 }
 
-export function IncidentMap({ items, height = 420, center = [16.705, 74.2433] }) {
+// Later markers draw on top, so the most dangerous open damage stays visible
+const markerRank = (i) => (i.status === "Repaired" ? 0 : { Low: 1, Medium: 2, High: 3 }[i.severity] ?? 1);
+
+export function IncidentMap({ items, height = 420, center = [16.705, 74.2433], touchPan = true }) {
   return (
     <div className="map-wrap" style={{ height }}>
-      <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+      <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom={!L.Browser.mobile} dragging={touchPan || !L.Browser.mobile}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -50,15 +49,16 @@ export function IncidentMap({ items, height = 420, center = [16.705, 74.2433] })
         <FitBounds items={items} />
         {items
           .filter((i) => i.lat != null)
+          .sort((a, b) => markerRank(a) - markerRank(b))
           .map((i) => (
             <CircleMarker
               key={i.id}
               center={[i.lat, i.lng]}
-              radius={i.severity === "High" ? 9 : i.severity === "Medium" ? 7 : 5}
+              radius={(i.status === "Repaired" ? 3.5 : i.severity === "High" ? 6 : i.severity === "Medium" ? 5 : 4) * (L.Browser.mobile ? 0.75 : 1)}
               pathOptions={{
-                color: i.status === "Repaired" ? "#8b8d98" : "#fff",
-                weight: 2,
-                fillColor: i.status === "Repaired" ? "#b9bbc6" : SEV_COLOR[i.severity],
+                color: "#fff",
+                weight: 1,
+                fillColor: i.status === "Repaired" ? "#1e9a5b" : SEV_COLOR[i.severity],
                 fillOpacity: 0.9,
               }}
             >
@@ -72,7 +72,7 @@ export function IncidentMap({ items, height = 420, center = [16.705, 74.2433] })
                   <div className="muted">
                     {i.zone} · {fmtDate(i.detected_at)}
                   </div>
-                  <Link to={`/incident/${i.id}`}>Inspect &amp; dispatch →</Link>
+                  <Link to={`/incident/${i.id}`}>Inspect and dispatch</Link>
                 </div>
               </Popup>
             </CircleMarker>
@@ -86,7 +86,7 @@ export function IncidentMap({ items, height = 420, center = [16.705, 74.2433] })
           </span>
         ))}
         <span>
-          <i style={{ background: "#b9bbc6" }} />
+          <i style={{ background: "#1e9a5b" }} />
           Repaired
         </span>
       </div>

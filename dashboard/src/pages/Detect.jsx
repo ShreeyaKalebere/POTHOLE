@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { IconMapPin, IconPhotoUp } from "@tabler/icons-react";
 import { api, TYPE_LABEL } from "../api";
 import { SevBadge } from "../components";
 
@@ -48,7 +49,7 @@ export default function Detect() {
     <>
       <header className="page-head">
         <div>
-          <h1>Detect Road Damage</h1>
+          <h1>Detect damage</h1>
           <p className="muted">Upload a road photo. GPS is read from the photo automatically if your phone saved it.</p>
         </div>
       </header>
@@ -64,7 +65,7 @@ export default function Detect() {
             }}
           >
             <input type="file" accept="image/*" capture="environment" onChange={(e) => pick(e.target.files[0])} hidden />
-            {preview ? <img src={preview} alt="" /> : <span>📷 Click or drop a road photo here</span>}
+            {preview ? <img src={preview} alt="" /> : <span className="drop-hint"><IconPhotoUp size={34} stroke={1.5} aria-hidden="true" />Choose or drop a road photo</span>}
           </label>
 
           <div className="form" style={{ marginTop: 14 }}>
@@ -79,7 +80,7 @@ export default function Detect() {
               </div>
             </div>
             <div className="row gap">
-              <button className="btn" onClick={useMyLocation}>📍 Use my location</button>
+              <button className="btn" onClick={useMyLocation}><IconMapPin size={17} stroke={1.8} aria-hidden="true" />Use my location</button>
               <label className="check">
                 <input type="checkbox" checked={save} onChange={(e) => setSave(e.target.checked)} /> Save as incidents
               </label>
@@ -118,7 +119,7 @@ export default function Detect() {
                       <td>{(d.confidence * 100).toFixed(0)}%</td>
                       <td>
                         {d.incident_id ? (
-                          <Link to={`/incident/${d.incident_id}`}>{d.new_incident ? "New incident →" : "Merged into existing →"}</Link>
+                          <Link to={`/incident/${d.incident_id}`}>{d.new_incident ? "New incident" : "Merged into existing"}</Link>
                         ) : <span className="muted">not saved</span>}
                       </td>
                     </tr>

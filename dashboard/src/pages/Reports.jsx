@@ -17,7 +17,7 @@ export default function Reports({ zone }) {
     <>
       <header className="page-head">
         <div>
-          <h1>Municipal Reports</h1>
+          <h1>Reports</h1>
           <p className="muted">Export incidents for maintenance planning ({zone === "All" ? "all zones" : zone})</p>
         </div>
       </header>
@@ -26,8 +26,8 @@ export default function Reports({ zone }) {
         <h3>Filters</h3>
         <Filters f={f} setF={setF} show={["type", "severity", "status", "dates"]} />
         <div className="row gap" style={{ marginTop: 16 }}>
-          <a className="btn primary" href={api.exportUrl("pdf", params)}>⤓ Download PDF report</a>
-          <a className="btn" href={api.exportUrl("csv", params)}>⤓ Download CSV (Excel)</a>
+          <a className="btn primary" href={api.exportUrl("pdf", params)}>Download PDF report</a>
+          <a className="btn" href={api.exportUrl("csv", params)}>Download CSV (Excel)</a>
         </div>
       </div>
 
@@ -48,7 +48,7 @@ export default function Reports({ zone }) {
         <h3>Model</h3>
         <p className="muted">After training finishes, reload the model so detection uses the newest weights.</p>
         <button className="btn" onClick={() => api.reloadModel().then((r) => setMsg(`Loaded ${r.weights}`)).catch((e) => setMsg(e.message))}>
-          ↻ Reload model
+          Reload model
         </button>
       </div>
     </>

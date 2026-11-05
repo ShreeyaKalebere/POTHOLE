@@ -59,8 +59,8 @@ export const api = {
 };
 
 export const TYPE_LABEL = { pothole: "Pothole", alligator_crack: "Alligator Crack" };
-export const SEV_COLOR = { High: "#e5484d", Medium: "#f59e0b", Low: "#30a46c" };
-export const STATUS_COLOR = { Reported: "#3e63dd", "In Progress": "#f59e0b", Repaired: "#30a46c" };
+export const SEV_COLOR = { High: "#e2502a", Medium: "#edb100", Low: "#8c887a" };
+export const STATUS_COLOR = { Reported: "#37287a", "In Progress": "#1f6fd1", Repaired: "#1e9a5b" };
 export const STATUSES = ["Reported", "In Progress", "Repaired"];
 export const TEAMS = ["Ward Team A", "Ward Team B", "Road Repair Unit 1", "Road Repair Unit 2", "PWD Contractor"];
 
