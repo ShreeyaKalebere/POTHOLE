@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Road Damage Label Verifier · Kolhapur Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-panel: rgba(18, 24, 38, 0.85);
+      --bg-card: rgba(27, 36, 56, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(56, 189, 248, 0.5);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --pothole-color: #38bdf8;
+      --pothole-glow: rgba(56, 189, 248, 0.3);
+      --crack-color: #fb923c;
+      --crack-glow: rgba(251, 146, 60, 0.3);
+      --success-color: #10b981;
+      --danger-color: #f43f5e;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      height: 60px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #0b0f19;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      max-width: 600px;
+      margin: 0 30px;
+    }
+    .dataset-select {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+    }
+    .dataset-select:focus { border-color: var(--border-focus); }
+
+    .progress-bar-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .progress-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Main Container */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Toolbar */
+    .toolbar-left {
+      width: 68px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 0;
+      gap: 14px;
+      z-index: 10;
+    }
+    .tool-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.15rem;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .tool-btn .key-hint {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+    .tool-btn.active {
+      border-color: var(--pothole-color);
+      color: var(--pothole-color);
+      background: var(--pothole-glow);
+    }
+    .tool-btn.active.crack {
+      border-color: var(--crack-color);
+      color: var(--crack-color);
+      background: var(--crack-glow);
+    }
+    .tool-divider {
+      width: 32px;
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+    }
+
+    /* Canvas Area */
+    .canvas-viewport {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at center, #111827 0%, #080c14 100%);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: crosshair;
+    }
+    canvas {
+      position: absolute;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      border-radius: 4px;
+    }
+
+    /* Floating Canvas Controls */
+    .canvas-overlay-controls {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 15;
+    }
+    .pill-btn {
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Bottom Action Bar */
+    .floating-action-bar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+      z-index: 15;
+    }
+
+    .btn-verify {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+    }
+    .btn-verify:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-clean {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid var(--border-color);
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-clean:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-scan {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-scan:hover {
+      box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+      transform: translateY(-1px);
+    }
+
+    /* Right Sidebar */
+    .sidebar-right {
+      width: 340px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .img-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .img-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-badge.verified {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .status-badge.unverified {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .nav-buttons-row {
+      display: flex;
+      gap: 8px;
+    }
+    .nav-btn {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 0;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .jump-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .jump-input {
+      width: 70px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      text-align: center;
+      outline: none;
+    }
+    .jump-input:focus { border-color: var(--border-focus); }
+
+    /* Filters tab */
+    .filter-tabs {
+      display: flex;
+      padding: 10px 16px;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+    .filter-tab {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .filter-tab:hover { color: var(--text-main); }
+    .filter-tab.active {
+      background: var(--bg-card);
+      color: var(--pothole-color);
+      font-weight: 600;
+    }
+
+    /* Box list in sidebar */
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .box-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .box-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .box-card.selected {
+      border-color: var(--pothole-color);
+      box-shadow: 0 0 10px var(--pothole-glow);
+    }
+    .box-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .box-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .box-dot.pothole { background: var(--pothole-color); }
+    .box-dot.crack { background: var(--crack-color); }
+    .box-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .box-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .box-delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .box-delete-btn:hover { color: var(--danger-color); }
+
+    /* Thumbnail Strip */
+    .thumb-strip {
+      height: 72px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      overflow-x: auto;
+      z-index: 10;
+    }
+    .thumb-strip::-webkit-scrollbar { height: 4px; }
+    .thumb-strip::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+    .thumb-item {
+      height: 52px;
+      width: 72px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      background: #000;
+    }
+    .thumb-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .thumb-item:hover img { opacity: 1; }
+    .thumb-item.active {
+      border: 2px solid var(--pothole-color);
+      box-shadow: 0 0 10px var(--pothole-glow);
+    }
+    .thumb-item.active img { opacity: 1; }
+    .thumb-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: var(--success-color);
+      color: #fff;
+      font-size: 0.6rem;
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+    .thumb-boxes-badge {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 0.6rem;
+      padding: 1px 4px;
+      border-radius: 2px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Shortcut Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 440px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .shortcut-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+    .shortcut-table td {
+      padding: 8px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .key-badge {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 76px;
+      right: 24px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(-20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast.success { border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
+    .toast.info { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span>🛣️ Road Damage Verifier</span>
+      <span class="brand-badge" id="activeDatasetTag">TRAIN SET</span>
+    </div>
+
+    <div class="header-center">
+      <select class="dataset-select" id="datasetSelect" onchange="switchDataset(this.value)">
+        <option value="kolhapur_train">Kolhapur Train (Morning Rides · 2,345 images)</option>
+        <option value="kolhapur_test">Kolhapur Test (Afternoon Rides · 469 images)</option>
+        <option value="fix_labels_val">Fix Labels Validation (Missed Boxes)</option>
+      </select>
+
+      <div class="progress-bar-container">
+        <div class="progress-text">
+          <span id="progressSummaryText">Verified: 0 / 2345 (0%)</span>
+          <span id="damageSummaryText">0 Potholes · 0 Cracks</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFillBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="pill-btn" onclick="toggleShortcutsModal()">
+        <span>⌨️ Shortcuts</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <!-- Left Toolbar -->
+    <div class="toolbar-left">
+      <div class="tool-btn active" id="toolSelect" title="Select / Edit (S)" onclick="setActiveTool('select')">
+        <span>👆</span>
+        <span class="key-hint">S</span>
+      </div>
+      <div class="tool-btn" id="toolPothole" title="Draw Pothole (1)" onclick="setActiveTool('pothole')">
+        <span style="color: var(--pothole-color);">🕳️</span>
+        <span class="key-hint">1</span>
+      </div>
+      <div class="tool-btn crack" id="toolCrack" title="Draw Crack (2)" onclick="setActiveTool('crack')">
+        <span style="color: var(--crack-color);">⚡</span>
+        <span class="key-hint">2</span>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-btn" title="Zoom In (+)" onclick="adjustZoom(1.2)">
+        <span>🔍+</span>
+      </div>
+      <div class="tool-btn" title="Zoom Out (-)" onclick="adjustZoom(0.8)">
+        <span>🔍-</span>
+      </div>
+      <div class="tool-btn" title="Fit to Screen (F)" onclick="resetZoom()">
+        <span>⛶</span>
+        <span class="key-hint">F</span>
+      </div>
+
+      <div class="tool-divider"></div>
+
+      <div class="tool-btn" title="Delete Selected Box (Del)" onclick="deleteSelectedBox()">
+        <span>🗑️</span>
+        <span class="key-hint">Del</span>
+      </div>
+    </div>
+
+    <!-- Canvas Area -->
+    <div class="canvas-viewport" id="canvasViewport">
+      <div class="canvas-overlay-controls">
+        <div class="pill-btn" id="zoomLevelIndicator">100%</div>
+        <div class="pill-btn" id="boxCountPill">0 Boxes</div>
+      </div>
+
+      <canvas id="mainCanvas"></canvas>
+
+      <!-- Floating Action Bar -->
+      <div class="floating-action-bar">
+        <button class="btn-clean" title="Mark Empty / Clean Road (D)" onclick="markCleanRoad()">
+          <span>🧹 Clean Road</span>
+          <span class="key-badge">D</span>
+        </button>
+
+        <button class="btn-scan" title="AI Model Scan (R)" onclick="triggerAIScan()">
+          <span>🤖 AI Scan</span>
+          <span class="key-badge">R</span>
+        </button>
+
+        <button class="btn-verify" title="Verify & Next (Space / Enter)" onclick="saveAndNext()">
+          <span>✓ Verify & Next</span>
+          <span class="key-badge" style="background: rgba(0,0,0,0.25);">Space</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="sidebar-right">
+      <div class="sidebar-header">
+        <div class="img-meta-row">
+          <span class="img-title" id="imageFileName">Loading...</span>
+          <span class="status-badge unverified" id="imageStatusBadge">UNVERIFIED</span>
+        </div>
+
+        <div class="nav-buttons-row">
+          <button class="nav-btn" onclick="prevImage()">
+            <span>◀ Prev</span>
+            <span class="key-badge">A</span>
+          </button>
+          <button class="nav-btn" onclick="nextImage()">
+            <span>Next ▶</span>
+            <span class="key-badge">D</span>
+          </button>
+          <button class="nav-btn" style="color: var(--pothole-color);" onclick="nextUnverified()">
+            <span>Next Unverified ⏭</span>
+          </button>
+        </div>
+
+        <div class="jump-row">
+          <span>Image:</span>
+          <input type="number" class="jump-input" id="jumpIndexInput" value="1" min="1" onchange="jumpToIndex(this.value)">
+          <span id="jumpTotalText">of 2345</span>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+        <button class="filter-tab" onclick="setFilter('unverified', this)">Unverified</button>
+        <button class="filter-tab" onclick="setFilter('verified', this)">Verified</button>
+        <button class="filter-tab" onclick="setFilter('has_damage', this)">Has Damage</button>
+        <button class="filter-tab" onclick="setFilter('empty_road', this)">Clean Road</button>
+      </div>
+
+      <!-- Box list -->
+      <div class="sidebar-content" id="sidebarBoxList">
+        <div class="section-title">Bounding Boxes</div>
+        <div id="boxListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Thumb Strip -->
+  <div class="thumb-strip" id="thumbStrip">
+    <!-- Dynamically populated thumbnail carousel -->
+  </div>
+
+  <!-- Shortcuts Modal -->
+  <div class="modal-backdrop" id="shortcutsModal" onclick="if(event.target===this) toggleShortcutsModal()">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>Keyboard Shortcuts</span>
+        <span style="cursor: pointer; font-size: 1.2rem;" onclick="toggleShortcutsModal()">×</span>
+      </div>
+      <table class="shortcut-table">
+        <tr>
+          <td><span class="key-badge">Space</span> or <span class="key-badge">Enter</span></td>
+          <td><b>Verify & Next:</b> Save boxes and go to next image</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">D</span> or <span class="key-badge">X</span></td>
+          <td><b>Clean Road:</b> Clear all boxes & mark verified empty</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">R</span></td>
+          <td><b>AI Scan:</b> Run YOLO model to detect damage</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">1</span> / <span class="key-badge">2</span></td>
+          <td>Switch drawing tool: <b>1 = Pothole</b>, <b>2 = Alligator Crack</b></td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">S</span></td>
+          <td>Switch to <b>Select / Edit Box</b> tool</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">Del</span> or <span class="key-badge">Backspace</span></td>
+          <td><b>Delete</b> currently selected bounding box</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">←</span> or <span class="key-badge">A</span></td>
+          <td><b>Previous</b> image</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">→</span></td>
+          <td><b>Next</b> image</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">F</span></td>
+          <td><b>Fit to screen</b> (reset zoom/pan)</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">Mouse Wheel</span></td>
+          <td><b>Zoom</b> in / out at cursor location</td>
+        </tr>
+        <tr>
+          <td><span class="key-badge">Middle Drag</span> or <span class="key-badge">Space+Drag</span></td>
+          <td><b>Pan</b> image around canvas</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✓</span>
+    <span id="toastMsg">Saved successfully</span>
+  </div>
+
+  <script>
+    // App State
+    let currentIndex = 0;
+    let totalImages = 0;
+    let currentImageMeta = null;
+    let currentBoxes = [];
+    let selectedBoxIndex = -1;
+    let activeTool = 'select'; // 'select', 'pothole', 'crack'
+    let currentFilter = 'all';
+    let currentDataset = 'kolhapur_train';
+
+    // Canvas & Viewport State
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const viewport = document.getElementById('canvasViewport');
+    let loadedImage = null;
+
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    // Interaction State
+    let isDrawing = false;
+    let drawStartX = 0;
+    let drawStartY = 0;
+    let drawCurrentX = 0;
+    let drawCurrentY = 0;
+
+    let isDraggingBox = false;
+    let isResizingBox = false;
+    let resizeHandle = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let initialBox = null;
+
+    const HANDLE_SIZE = 8;
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadDatasetList();
+      await loadStats();
+      await loadImage(0);
+      setupCanvasEvents();
+      setupKeyboardEvents();
+      window.addEventListener('resize', fitCanvasToViewport);
+    });
+
+    async function loadDatasetList() {
+      try {
+        const res = await fetch('/api/datasets');
+        const data = await res.json();
+        const sel = document.getElementById('datasetSelect');
+        sel.innerHTML = '';
+        data.datasets.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.key;
+          opt.textContent = `${d.name} (${d.total_images} images)`;
+          if (d.is_active) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        currentDataset = data.active;
+        updateDatasetTag();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateDatasetTag() {
+      const tag = document.getElementById('activeDatasetTag');
+      if (currentDataset === 'kolhapur_train') tag.textContent = 'TRAIN SET';
+      else if (currentDataset === 'kolhapur_test') tag.textContent = 'TEST SET';
+      else tag.textContent = 'VALIDATION';
+    }
+
+    async function switchDataset(key) {
+      try {
+        await fetch('/api/dataset/select', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ dataset: key })
+        });
+        currentDataset = key;
+        updateDatasetTag();
+        await loadStats();
+        await loadImage(0);
+        showToast('Switched to ' + key, 'info');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`/api/stats?dataset=${currentDataset}`);
+        const data = await res.json();
+        totalImages = data.total_images;
+        const pct = totalImages > 0 ? ((data.verified_count / totalImages) * 100).toFixed(1) : 0;
+        document.getElementById('progressSummaryText').textContent = `Verified: ${data.verified_count} / ${totalImages} (${pct}%)`;
+        document.getElementById('damageSummaryText').textContent = `${data.pothole_count} Potholes · ${data.crack_count} Cracks · ${data.clean_count} Clean`;
+        document.getElementById('progressFillBar').style.width = `${pct}%`;
+        document.getElementById('jumpTotalText').textContent = `of ${totalImages}`;
+        document.getElementById('jumpIndexInput').max = totalImages;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadImage(index) {
+      try {
+        const res = await fetch(`/api/image/${index}?dataset=${currentDataset}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        currentIndex = data.index;
+        currentImageMeta = data;
+        currentBoxes = data.boxes.map(b => ({ ...b }));
+        selectedBoxIndex = -1;
+
+        // Update UI info
+        document.getElementById('imageFileName').textContent = data.filename;
+        document.getElementById('jumpIndexInput').value = currentIndex + 1;
+        const badge = document.getElementById('imageStatusBadge');
+        if (data.is_verified) {
+          badge.className = 'status-badge verified';
+          badge.textContent = 'VERIFIED';
+        } else {
+          badge.className = 'status-badge unverified';
+          badge.textContent = 'UNVERIFIED';
+        }
+
+        // Load image into HTML Image object
+        const img = new Image();
+        img.src = `/api/image_raw/${currentIndex}?dataset=${currentDataset}&t=${Date.now()}`;
+        img.onload = () => {
+          loadedImage = img;
+          fitCanvasToViewport();
+          render();
+          updateSidebarBoxList();
+          loadThumbStrip();
+        };
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function fitCanvasToViewport() {
+      if (!loadedImage) return;
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+      const imgW = loadedImage.naturalWidth || loadedImage.width;
+      const imgH = loadedImage.naturalHeight || loadedImage.height;
+
+      const scale = Math.min((vw - 60) / imgW, (vh - 60) / imgH, 1.0);
+      zoom = scale;
+      panX = (vw - imgW * scale) / 2;
+      panY = (vh - imgH * scale) / 2;
+      document.getElementById('zoomLevelIndicator').textContent = `${Math.round(zoom * 100)}%`;
+      render();
+    }
+
+    function resetZoom() {
+      fitCanvasToViewport();
+    }
+
+    function adjustZoom(factor, centerX, centerY) {
+      if (!loadedImage) return;
+      const oldZoom = zoom;
+      zoom = Math.max(0.15, Math.min(zoom * factor, 6.0));
+      
+      const cx = centerX !== undefined ? centerX : viewport.clientWidth / 2;
+      const cy = centerY !== undefined ? centerY : viewport.clientHeight / 2;
+
+      panX = cx - (cx - panX) * (zoom / oldZoom);
+      panY = cy - (cy - panY) * (zoom / oldZoom);
+      document.getElementById('zoomLevelIndicator').textContent = `${Math.round(zoom * 100)}%`;
+      render();
+    }
+
+    function render() {
+      if (!loadedImage) return;
+      const imgW = loadedImage.naturalWidth || loadedImage.width;
+      const imgH = loadedImage.naturalHeight || loadedImage.height;
+
+      canvas.width = viewport.clientWidth;
+      canvas.height = viewport.clientHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(panX, panY);
+      ctx.scale(zoom, zoom);
+
+      // Draw Base Image
+      ctx.drawImage(loadedImage, 0, 0, imgW, imgH);
+
+      // Draw Bounding Boxes
+      currentBoxes.forEach((b, idx) => {
+        const isSel = idx === selectedBoxIndex;
+        const color = b.class_id === 0 ? '#38bdf8' : '#fb923c';
+        const labelText = b.class_id === 0 ? 'Pothole' : 'Crack';
+
+        const bx = (b.x_center - b.width / 2) * imgW;
+        const by = (b.y_center - b.height / 2) * imgH;
+        const bw = b.width * imgW;
+        const bh = b.height * imgH;
+
+        // Box stroke & fill
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(2, 2.5 / zoom);
+        if (isSel) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = Math.max(3, 4 / zoom);
+          ctx.fillStyle = b.class_id === 0 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(251, 146, 60, 0.25)';
+          ctx.fillRect(bx, by, bw, bh);
+        }
+        ctx.strokeRect(bx, by, bw, bh);
+
+        // Tag badge
+        ctx.fillStyle = color;
+        const tagText = `${labelText} ${b.confidence ? '(' + b.confidence.toFixed(2) + ')' : ''}`;
+        const fontSize = Math.max(12, 14 / zoom);
+        ctx.font = `600 ${fontSize}px Outfit, sans-serif`;
+        const textW = ctx.measureText(tagText).width;
+        const badgeH = fontSize + 6 / zoom;
+        const badgeY = by - badgeH > 0 ? by - badgeH : by;
+
+        ctx.fillRect(bx, badgeY, textW + 10 / zoom, badgeH);
+        ctx.fillStyle = '#0b0f19';
+        ctx.fillText(tagText, bx + 5 / zoom, badgeY + badgeH - 3 / zoom);
+
+        // Resize handles if selected
+        if (isSel) {
+          drawHandles(bx, by, bw, bh);
+        }
+      });
+
+      // Drawing Box Preview
+      if (isDrawing) {
+        const color = activeTool === 'crack' ? '#fb923c' : '#38bdf8';
+        const x = Math.min(drawStartX, drawCurrentX);
+        const y = Math.min(drawStartY, drawCurrentY);
+        const w = Math.abs(drawCurrentX - drawStartX);
+        const h = Math.abs(drawCurrentY - drawStartY);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(2, 2.5 / zoom);
+        ctx.setLineDash([6 / zoom, 4 / zoom]);
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = activeTool === 'crack' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(56, 189, 248, 0.2)';
+        ctx.fillRect(x, y, w, h);
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+      document.getElementById('boxCountPill').textContent = `${currentBoxes.length} Boxes`;
+    }
+
+    function drawHandles(bx, by, bw, bh) {
+      const handles = getHandleCoordinates(bx, by, bw, bh);
+      const hs = Math.max(6, HANDLE_SIZE / zoom);
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0b0f19';
+      ctx.lineWidth = Math.max(1, 1.5 / zoom);
+
+      for (const k in handles) {
+        const pt = handles[k];
+        ctx.fillRect(pt.x - hs / 2, pt.y - hs / 2, hs, hs);
+        ctx.strokeRect(pt.x - hs / 2, pt.y - hs / 2, hs, hs);
+      }
+    }
+
+    function getHandleCoordinates(bx, by, bw, bh) {
+      return {
+        tl: { x: bx, y: by },
+        tc: { x: bx + bw / 2, y: by },
+        tr: { x: bx + bw, y: by },
+        ml: { x: bx, y: by + bh / 2 },
+        mr: { x: bx + bw, y: by + bh / 2 },
+        bl: { x: bx, y: by + bh },
+        bc: { x: bx + bw / 2, y: by + bh },
+        br: { x: bx + bw, y: by + bh },
+      };
+    }
+
+    function screenToImageCoords(sx, sy) {
+      return {
+        x: (sx - panX) / zoom,
+        y: (sy - panY) / zoom
+      };
+    }
+
+    function setupCanvasEvents() {
+      viewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.15 : 0.87;
+        adjustZoom(factor, e.clientX - viewport.getBoundingClientRect().left, e.clientY - viewport.getBoundingClientRect().top);
+      }, { passive: false });
+
+      viewport.addEventListener('mousedown', (e) => {
+        const rect = viewport.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+
+        // Middle button or Space+click = Pan
+        if (e.button === 1 || (e.button === 0 && e.spaceKey)) {
+          isPanning = true;
+          panStartX = sx - panX;
+          panStartY = sy - panY;
+          viewport.style.cursor = 'grabbing';
+          return;
+        }
+
+        if (e.button !== 0) return;
+
+        const imgPt = screenToImageCoords(sx, sy);
+        const imgW = loadedImage.naturalWidth || loadedImage.width;
+        const imgH = loadedImage.naturalHeight || loadedImage.height;
+
+        // Check if clicked resize handle of selected box
+        if (selectedBoxIndex >= 0) {
+          const b = currentBoxes[selectedBoxIndex];
+          const bx = (b.x_center - b.width / 2) * imgW;
+          const by = (b.y_center - b.height / 2) * imgH;
+          const bw = b.width * imgW;
+          const bh = b.height * imgH;
+          const handles = getHandleCoordinates(bx, by, bw, bh);
+          const hs = Math.max(8, (HANDLE_SIZE * 1.5) / zoom);
+
+          for (const k in handles) {
+            const pt = handles[k];
+            if (Math.abs(imgPt.x - pt.x) <= hs && Math.abs(imgPt.y - pt.y) <= hs) {
+              isResizingBox = true;
+              resizeHandle = k;
+              dragStartX = imgPt.x;
+              dragStartY = imgPt.y;
+              initialBox = { ...b };
+              return;
+            }
+          }
+        }
+
+        // If Select tool: check if clicked inside any existing box
+        if (activeTool === 'select') {
+          let clickedIdx = -1;
+          for (let i = currentBoxes.length - 1; i >= 0; i--) {
+            const b = currentBoxes[i];
+            const bx = (b.x_center - b.width / 2) * imgW;
+            const by = (b.y_center - b.height / 2) * imgH;
+            const bw = b.width * imgW;
+            const bh = b.height * imgH;
+            if (imgPt.x >= bx && imgPt.x <= bx + bw && imgPt.y >= by && imgPt.y <= by + bh) {
+              clickedIdx = i;
+              break;
+            }
+          }
+
+          if (clickedIdx >= 0) {
+            selectedBoxIndex = clickedIdx;
+            isDraggingBox = true;
+            dragStartX = imgPt.x;
+            dragStartY = imgPt.y;
+            initialBox = { ...currentBoxes[clickedIdx] };
+            render();
+            updateSidebarBoxList();
+            return;
+          } else {
+            selectedBoxIndex = -1;
+            render();
+            updateSidebarBoxList();
+          }
+        }
+
+        // Drawing new box (if in pothole/crack tool or if clicked empty space in select tool)
+        if (imgPt.x >= 0 && imgPt.x <= imgW && imgPt.y >= 0 && imgPt.y <= imgH) {
+          isDrawing = true;
+          drawStartX = imgPt.x;
+          drawStartY = imgPt.y;
+          drawCurrentX = imgPt.x;
+          drawCurrentY = imgPt.y;
+          selectedBoxIndex = -1;
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        const rect = viewport.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+
+        if (isPanning) {
+          panX = sx - panStartX;
+          panY = sy - panStartY;
+          render();
+          return;
+        }
+
+        const imgPt = screenToImageCoords(sx, sy);
+        if (!loadedImage) return;
+        const imgW = loadedImage.naturalWidth || loadedImage.width;
+        const imgH = loadedImage.naturalHeight || loadedImage.height;
+
+        if (isDrawing) {
+          drawCurrentX = Math.max(0, Math.min(imgW, imgPt.x));
+          drawCurrentY = Math.max(0, Math.min(imgH, imgPt.y));
+          render();
+          return;
+        }
+
+        if (isDraggingBox && selectedBoxIndex >= 0) {
+          const dx = (imgPt.x - dragStartX) / imgW;
+          const dy = (imgPt.y - dragStartY) / imgH;
+          const b = currentBoxes[selectedBoxIndex];
+          b.x_center = Math.max(b.width / 2, Math.min(1 - b.width / 2, initialBox.x_center + dx));
+          b.y_center = Math.max(b.height / 2, Math.min(1 - b.height / 2, initialBox.y_center + dy));
+          render();
+          return;
+        }
+
+        if (isResizingBox && selectedBoxIndex >= 0) {
+          resizeBoxWithHandle(imgPt, imgW, imgH);
+          render();
+          return;
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          viewport.style.cursor = 'crosshair';
+        }
+
+        if (isDrawing) {
+          isDrawing = false;
+          const imgW = loadedImage.naturalWidth || loadedImage.width;
+          const imgH = loadedImage.naturalHeight || loadedImage.height;
+
+          const x1 = Math.min(drawStartX, drawCurrentX);
+          const y1 = Math.min(drawStartY, drawCurrentY);
+          const x2 = Math.max(drawStartX, drawCurrentX);
+          const y2 = Math.max(drawStartY, drawCurrentY);
+
+          const w = (x2 - x1) / imgW;
+          const h = (y2 - y1) / imgH;
+
+          // Only keep box if larger than minimal size (5px)
+          if (x2 - x1 > 5 && y2 - y1 > 5) {
+            const class_id = activeTool === 'crack' ? 1 : 0;
+            currentBoxes.push({
+              class_id: class_id,
+              class_name: class_id === 0 ? 'pothole' : 'alligator_crack',
+              x_center: (x1 + x2) / 2 / imgW,
+              y_center: (y1 + y2) / 2 / imgH,
+              width: w,
+              height: h,
+              confidence: 1.0
+            });
+            selectedBoxIndex = currentBoxes.length - 1;
+            updateSidebarBoxList();
+          }
+          render();
+        }
+
+        if (isDraggingBox || isResizingBox) {
+          isDraggingBox = false;
+          isResizingBox = false;
+          updateSidebarBoxList();
+        }
+      });
+    }
+
+    function resizeBoxWithHandle(imgPt, imgW, imgH) {
+      const b = currentBoxes[selectedBoxIndex];
+      const init = initialBox;
+      let x1 = (init.x_center - init.width / 2) * imgW;
+      let y1 = (init.y_center - init.height / 2) * imgH;
+      let x2 = (init.x_center + init.width / 2) * imgW;
+      let y2 = (init.y_center + init.height / 2) * imgH;
+
+      const curX = Math.max(0, Math.min(imgW, imgPt.x));
+      const curY = Math.max(0, Math.min(imgH, imgPt.y));
+
+      if (resizeHandle.includes('l')) x1 = Math.min(curX, x2 - 10);
+      if (resizeHandle.includes('r')) x2 = Math.max(curX, x1 + 10);
+      if (resizeHandle.includes('t')) y1 = Math.min(curY, y2 - 10);
+      if (resizeHandle.includes('b')) y2 = Math.max(curY, y1 + 10);
+
+      b.x_center = (x1 + x2) / 2 / imgW;
+      b.y_center = (y1 + y2) / 2 / imgH;
+      b.width = (x2 - x1) / imgW;
+      b.height = (y2 - y1) / imgH;
+    }
+
+    function setupKeyboardEvents() {
+      window.addEventListener('keydown', (e) => {
+        // Ignore if typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          saveAndNext();
+        } else if (e.key === 'd' || e.key === 'D') {
+          e.preventDefault();
+          markCleanRoad();
+        } else if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          triggerAIScan();
+        } else if (e.key === '1') {
+          setActiveTool('pothole');
+        } else if (e.key === '2') {
+          setActiveTool('crack');
+        } else if (e.key === 's' || e.key === 'S') {
+          setActiveTool('select');
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+          deleteSelectedBox();
+        } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+          prevImage();
+        } else if (e.key === 'ArrowRight') {
+          nextImage();
+        } else if (e.key === 'f' || e.key === 'F') {
+          resetZoom();
+        } else if (e.key === '?') {
+          toggleShortcutsModal();
+        }
+      });
+    }
+
+    function setActiveTool(tool) {
+      activeTool = tool;
+      document.getElementById('toolSelect').className = 'tool-btn' + (tool === 'select' ? ' active' : '');
+      document.getElementById('toolPothole').className = 'tool-btn' + (tool === 'pothole' ? ' active' : '');
+      document.getElementById('toolCrack').className = 'tool-btn crack' + (tool === 'crack' ? ' active crack' : '');
+    }
+
+    function updateSidebarBoxList() {
+      const container = document.getElementById('boxListContainer');
+      container.innerHTML = '';
+
+      if (currentBoxes.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 12px 0; text-align: center;">No bounding boxes (Clean Road)</div>';
+        return;
+      }
+
+      currentBoxes.forEach((b, idx) => {
+        const card = document.createElement('div');
+        card.className = 'box-card' + (idx === selectedBoxIndex ? ' selected' : '');
+        card.onclick = () => {
+          selectedBoxIndex = idx;
+          render();
+          updateSidebarBoxList();
+        };
+
+        const left = document.createElement('div');
+        left.className = 'box-card-left';
+
+        const dot = document.createElement('div');
+        dot.className = 'box-dot ' + (b.class_id === 0 ? 'pothole' : 'crack');
+
+        const textDiv = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'box-title';
+        title.textContent = `${idx + 1}. ${b.class_id === 0 ? 'Pothole' : 'Alligator Crack'}`;
+
+        const sub = document.createElement('div');
+        sub.className = 'box-sub';
+        sub.textContent = `${Math.round(b.width * 100)}% × ${Math.round(b.height * 100)}%`;
+
+        textDiv.appendChild(title);
+        textDiv.appendChild(sub);
+        left.appendChild(dot);
+        left.appendChild(textDiv);
+
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'box-delete-btn';
+        delBtn.innerHTML = '🗑️';
+        delBtn.title = 'Delete box';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          currentBoxes.splice(idx, 1);
+          selectedBoxIndex = -1;
+          render();
+          updateSidebarBoxList();
+        };
+
+        card.appendChild(left);
+        card.appendChild(delBtn);
+        container.appendChild(card);
+      });
+    }
+
+    function deleteSelectedBox() {
+      if (selectedBoxIndex >= 0 && selectedBoxIndex < currentBoxes.length) {
+        currentBoxes.splice(selectedBoxIndex, 1);
+        selectedBoxIndex = -1;
+        render();
+        updateSidebarBoxList();
+        showToast('Deleted box', 'info');
+      }
+    }
+
+    async function saveAndNext() {
+      try {
+        const res = await fetch(`/api/verify/${currentIndex}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            dataset: currentDataset,
+            boxes: currentBoxes
+          })
+        });
+        const data = await res.json();
+        showToast(`Verified image #${currentIndex + 1} (${currentBoxes.length} boxes)`, 'success');
+        await loadStats();
+
+        // Advance to next image
+        if (data.next_unverified_index !== null && data.next_unverified_index !== undefined) {
+          loadImage(data.next_unverified_index);
+        } else if (currentIndex + 1 < totalImages) {
+          loadImage(currentIndex + 1);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function markCleanRoad() {
+      currentBoxes = [];
+      selectedBoxIndex = -1;
+      render();
+      updateSidebarBoxList();
+      await saveAndNext();
+    }
+
+    async function triggerAIScan() {
+      try {
+        showToast('Running YOLO AI Scan...', 'info');
+        const res = await fetch(`/api/predict/${currentIndex}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            dataset: currentDataset,
+            conf: 0.25
+          })
+        });
+        const data = await res.json();
+        currentBoxes = data.boxes;
+        selectedBoxIndex = -1;
+        render();
+        updateSidebarBoxList();
+        showToast(`AI found ${data.count} boxes in ${data.inference_ms}ms`, 'success');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function prevImage() {
+      if (currentIndex > 0) loadImage(currentIndex - 1);
+    }
+
+    function nextImage() {
+      if (currentIndex + 1 < totalImages) loadImage(currentIndex + 1);
+    }
+
+    function nextUnverified() {
+      if (currentImageMeta && currentImageMeta.next_unverified_index !== null) {
+        loadImage(currentImageMeta.next_unverified_index);
+      } else {
+        showToast('All images verified in this set!', 'success');
+      }
+    }
+
+    function jumpToIndex(val) {
+      const idx = parseInt(val) - 1;
+      if (idx >= 0 && idx < totalImages) {
+        loadImage(idx);
+      }
+    }
+
+    function setFilter(filter, el) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      loadThumbStrip();
+    }
+
+    async function loadThumbStrip() {
+      try {
+        const res = await fetch(`/api/images?dataset=${currentDataset}&filter=${currentFilter}`);
+        const data = await res.json();
+        const strip = document.getElementById('thumbStrip');
+        strip.innerHTML = '';
+
+        data.images.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'thumb-item' + (item.index === currentIndex ? ' active' : '');
+          div.onclick = () => loadImage(item.index);
+
+          const img = document.createElement('img');
+          img.src = `/api/image_raw/${item.index}?dataset=${currentDataset}`;
+          img.loading = 'lazy';
+
+          if (item.is_verified) {
+            const badge = document.createElement('div');
+            badge.className = 'thumb-badge';
+            badge.textContent = '✓';
+            div.appendChild(badge);
+          }
+
+          if (item.box_count > 0) {
+            const cntBadge = document.createElement('div');
+            cntBadge.className = 'thumb-boxes-badge';
+            cntBadge.textContent = item.box_count;
+            div.appendChild(cntBadge);
+          }
+
+          div.appendChild(img);
+          strip.appendChild(div);
+        });
+
+        // Center active thumb
+        const activeEl = strip.querySelector('.thumb-item.active');
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function toggleShortcutsModal() {
+      const modal = document.getElementById('shortcutsModal');
+      modal.classList.toggle('open');
+    }
+
+    let toastTimer = null;
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      const msgEl = document.getElementById('toastMsg');
+
+      toast.className = `toast show ${type}`;
+      icon.textContent = type === 'success' ? '✓' : 'ℹ';
+      msgEl.textContent = msg;
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.className = 'toast';
+      }, 2400);
+    }
+  </script>
+</body>
+</html>

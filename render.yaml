@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: road-damage-kolhapur
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: MONGO_URI
+        value: mongodb+srv://pothole_admin:aTwRZO0bZZCLFIMK@cluster0.lag8x5i.mongodb.net/pothole_detection?retryWrites=true&w=majority
+      - key: DB_NAME
+        value: pothole_detection
+      - key: INFER_DEVICE
+        value: cpu
+      - key: MEDIA_BACKEND
+        value: gridfs
+      - key: PORT
+        value: 8000

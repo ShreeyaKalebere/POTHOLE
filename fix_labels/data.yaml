@@ -1,0 +1,3 @@
+# for Roboflow / LabelImg import
+nc: 2
+names: ['pothole', 'alligator_crack']

@@ -2,7 +2,7 @@
 # Rationale (from the audit, qa/audit_summary.md): v8 dropped tiny boxes, Norway/Czech and half of
 # Japan, and scored WORSE than v1 (0.600 vs 0.639) - those images are exactly what the test set is
 # made of. v9 keeps every image and every box.
-path: dataset
+path: F:/POTHOLE_PROJECT/dataset
 train:
   - images/train
   - images/val

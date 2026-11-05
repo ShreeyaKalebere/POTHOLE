@@ -1,0 +1,152 @@
+﻿name,forks,stars,language,pushed,url,readme_chars,hints,max_precision,max_map,max_accuracy,evidence
+keremberke/awesome-yolov8-models,27,233,HTML,2023-02-27,https://github.com/keremberke/awesome-yolov8-models,15174,yolov8; yolov8m; yolov8n; yolov8s,,50.0,,mAP@0.5 | f13 | mAP@0.5 | mAP@0.5 | mAP@0.5 | mAP@0.5 | mAP@0.5 | mAP@0.5 | mAP@0.5 | mAP@0.5 | f16 | mAP@0.5
+noorkhokhar99/Pothole-Detection-Pothole-Detection-using-python-and-deep-learning,19,49,Python,2024-08-11,https://github.com/noorkhokhar99/Pothole-Detection-Pothole-Detection-using-python-and-deep-learning,1133,yolov8,,,,
+mounishvatti/pothole_detection_yolov8,13,38,Jupyter Notebook,2024-09-30,https://github.com/mounishvatti/pothole_detection_yolov8,2180,imgsz=640; yolov8; yolov8m,,,,
+ruirangerfan/unsupervised_disparity_map_segmentation,7,15,MATLAB,2021-01-29,https://github.com/ruirangerfan/unsupervised_disparity_map_segmentation,1772,,,,,
+devstrons/pothole-detector,7,13,Dart,2022-04-06,https://github.com/devstrons/pothole-detector,868,,,,,
+nirbhayph/spothole.core,6,22,HTML,2023-03-24,https://github.com/nirbhayph/spothole.core,21339,,,,,
+BrianRuizy/2019-Microsoft-IoT-hackathon,5,25,Jupyter Notebook,2022-10-14,https://github.com/BrianRuizy/2019-Microsoft-IoT-hackathon,3548,,,,,
+hlwang1124/AAFramework,5,31,Python,2024-10-25,https://github.com/hlwang1124/AAFramework,3237,,,,,
+SanTiwari07/PotHoleDetection,5,9,Python,2026-10-24,https://github.com/SanTiwari07/PotHoleDetection,20159,100 epochs; 320×240; 640×640; 665 images; yolov8; yolov8m,,81.7,,mAP@0.5 = 81.7% | mAP@0.5 | mAP@0.5
+yagnahaunj1410/Pothole_Detection_Using_Image_Processing,3,10,,2020-07-25,https://github.com/yagnahaunj1410/Pothole_Detection_Using_Image_Processing,10821,,,,,
+abubakarsiddik31/Potholes-Detection,3,7,Jupyter Notebook,2022-12-22,https://github.com/abubakarsiddik31/Potholes-Detection,2327,epochs: 50; yolov5; yolov7,,,,
+kc-codes/Urban-Mobility-Solution,2,6,Python,2024-03-04,https://github.com/kc-codes/Urban-Mobility-Solution,2609,,,,,
+jaygala24/pothole-detection,3,14,,2023-04-10,https://github.com/jaygala24/pothole-detection,1299,,,,,
+nirbhayph/spothole.authority,3,4,HTML,2021-01-06,https://github.com/nirbhayph/spothole.authority,19665,,,,,
+sajithlaldev/kuzhiyundo,2,6,TypeScript,2026-06-13,https://github.com/sajithlaldev/kuzhiyundo,5796,800×800,,,,
+Tanwar-12/POT-HOLE-DETECTION-YOLOV5,2,20,Jupyter Notebook,2024-08-05,https://github.com/Tanwar-12/POT-HOLE-DETECTION-YOLOV5,1866,133 images; 465 images; 600 epochs; yolov5,,,,
+Gopi-p/pothole-detector,2,0,Python,2025-01-23,https://github.com/Gopi-p/pothole-detector,667,,,,,
+Ihsan-p1/InfraSight,2,0,Python,2026-09-25,https://github.com/Ihsan-p1/InfraSight,7696,50 epochs; mobilenetv3; yolov8,,60.0,,map with Depth Anything V2 | mAP@50 | above 0.60
+samyesuraj/Dashcam-Pothole-Detection,2,1,JavaScript,2025-06-25,https://github.com/samyesuraj/Dashcam-Pothole-Detection,2499,,,,,
+MelekElloumi/pothole-detection-nvidia-ai-hack-2022,2,2,Jupyter Notebook,2022-08-31,https://github.com/MelekElloumi/pothole-detection-nvidia-ai-hack-2022,1025,,,,,
+rishvant/SafeRoadsAI,3,0,TypeScript,2025-07-31,https://github.com/rishvant/SafeRoadsAI,1729,,,,,
+HarshAgarwal2703/Pothole-Project,2,6,Jupyter Notebook,2021-06-19,https://github.com/HarshAgarwal2703/Pothole-Project,0,,,,,
+srajan-kiyotaka/Pothole-Detection,2,8,Jupyter Notebook,2023-05-23,https://github.com/srajan-kiyotaka/Pothole-Detection,0,,,,,
+HariharanElancheliyan/pothole-detection-using-python,1,5,Jupyter Notebook,2023-04-01,https://github.com/HariharanElancheliyan/pothole-detection-using-python,848,yolov4,,,,
+theabktech/Pothole-Detection-System-using-CNN,1,2,Jupyter Notebook,2021-07-15,https://github.com/theabktech/Pothole-Detection-System-using-CNN,1772,1022 images; 110 images; 136 images; 20 epochs,,,91.8,accuracy of 91.82%
+ModuForgeX/Nirmaan,1,2,JavaScript,2026-07-05,https://github.com/ModuForgeX/Nirmaan,0,,,,,
+nive927/Pothole-and-Plain-Road-Classification,1,6,Jupyter Notebook,2021-04-16,https://github.com/nive927/Pothole-and-Plain-Road-Classification,1951,vgg16,,,,
+tschia94/PODOR,2,2,CSS,2023-07-18,https://github.com/tschia94/PODOR,1220,maskrcnn; resnet101,,,,
+akshxyjagtap/Pothole-Detection-System-using-YOLO-Tiny-v4,1,3,Python,2024-01-15,https://github.com/akshxyjagtap/Pothole-Detection-System-using-YOLO-Tiny-v4,3027,yolov4; yolov4_tiny,,,,
+DmPanf/Potholes_Detector,1,5,Python,2025-02-16,https://github.com/DmPanf/Potholes_Detector,12099,yolov8,,,,
+rithishbarathn/pothole-minor-project,1,0,TypeScript,2026-05-05,https://github.com/rithishbarathn/pothole-minor-project,5275,yolov11; yolov11s; yolov11s_pothole_trained,,,,
+Spyrosigma/StreetSpecter,1,0,Jupyter Notebook,2024-08-11,https://github.com/Spyrosigma/StreetSpecter,2221,1698 images; 25 epochs; 5493 images; yolov8s,,,,f1-c27
+collabdoor/road-anomaly-detection,2,25,Jupyter Notebook,2026-01-19,https://github.com/collabdoor/road-anomaly-detection,12592,"25,369 images; 30,685 images; yolo11n; yolov8; yolov8_small_2nd_model; yolov8m; yolov8s",73.6,95.0,,"Map Classes, Split 70 | Precision | Recall | mAP@.5 | mAP@.5:.95 | Precision | Recall | mAP@.5 | mAP@.5:.95 | Precision:** 0.736 | Recall:** 0.740 | mAP@0.5:** 0.745 | mAP@0.5:0.95:** 0.448 | F1-Score:** 0.738 | F1_curve.png"" alt=""F1"
+bell-ha/doori-robot-idea,1,0,,2026-09-27,https://github.com/bell-ha/doori-robot-idea,2056,yolov8,,,,
+YalamarthyYojaswi/road-hazard-detection,0,0,Jupyter Notebook,2026-03-30,https://github.com/YalamarthyYojaswi/road-hazard-detection,1386,30 epochs; 3642 images; yolov8,,50.0,,mAP@50 | mAP@50
+TaushiqB/Pothole-Alert-System,0,0,Jupyter Notebook,2024-06-21,https://github.com/TaushiqB/Pothole-Alert-System,246,,,,,
+Umesh49/Samadhan,0,0,TypeScript,2026-01-15,https://github.com/Umesh49/Samadhan,4198,,,,,
+tanveerisofficial-lang/TAS-Pothole-Detection-System,0,0,Python,2026-05-26,https://github.com/tanveerisofficial-lang/TAS-Pothole-Detection-System,0,,,,,
+hamidhosen42/Pothole-Detection-Using-Transfer-Learning-Models-A-Comparative-Study,0,0,Jupyter Notebook,2024-01-06,https://github.com/hamidhosen42/Pothole-Detection-Using-Transfer-Learning-Models-A-Comparative-Study,5040,1021 images; 5075 images; 6096 images; mobilenet; mobilenetv2; resnetv2; vgg16; vgg19,,,,"f1-score, and computational time acquiring 96.44% | f1e4 | f1a35 | f137"
+gurleenkaurmalhotra115-jpg/pothole-detection,0,2,JavaScript,2026-07-20,https://github.com/gurleenkaurmalhotra115-jpg/pothole-detection,5300,,,,,
+mr-mohan-v/Pothole-Alert-System,0,0,Jupyter Notebook,2023-07-17,https://github.com/mr-mohan-v/Pothole-Alert-System,245,,,,,
+N-I-Preetish/Arduino-Road-Condition-Monitoring-System,0,0,C++,2026-06-23,https://github.com/N-I-Preetish/Arduino-Road-Condition-Monitoring-System,3004,,,,,
+thirthpatel2-web/Road_scan_AI-,1,1,CSS,2026-09-25,https://github.com/thirthpatel2-web/Road_scan_AI-,3183,224×224,,,,
+Rakshit-Shetty/Pothole-Detection,0,2,Python,2020-04-14,https://github.com/Rakshit-Shetty/Pothole-Detection,105,yolov2,,,,
+Developer-Vinayak/pothole-detection-gps-iot,0,0,Python,2026-10-25,https://github.com/Developer-Vinayak/pothole-detection-gps-iot,14798,160×160; yolov8,,,,
+Skedare240507/CivicSense,0,0,TypeScript,2026-08-09,https://github.com/Skedare240507/CivicSense,3904,yolov8,,,,
+HarshithaPethuraj/pothole-detection-yolov8,0,1,Jupyter Notebook,2026-06-08,https://github.com/HarshithaPethuraj/pothole-detection-yolov8,4891,"47,000 images; 50 epochs; 665 images; yolov8; yolov8n; yolov8s",1.8,,,Precision** | 1.8%
+princekumar-dev/YOLO_pothole,0,0,CSS,2026-10-20,https://github.com/princekumar-dev/YOLO_pothole,4551,50 epochs; 665 images; yolo11; yolo11n; yolo11nano; yolo11s,,,,
+HadeedJalani/RoadHazard-Vision,0,0,Python,2026-09-04,https://github.com/HadeedJalani/RoadHazard-Vision,16502,epochs 80; imgsz 640; yolo26; yolo26_pothole; yolo26m,,95.0,,mAP@50 | mAP@50:95
+OscarMuchiri/road-damage-detection-yolov8,0,0,Jupyter Notebook,2026-10-07,https://github.com/OscarMuchiri/road-damage-detection-yolov8,3301,yolov8; yolov8n,84.6,95.0,,mAP@50 | 0.8218 | mAP@50–95 | Precision: **0.846 | Recall: **0.725 | mAP@50: **82.18% | mAP@50–95
+skeshri09/pothole-measure-api,0,0,JavaScript,2026-10-18,https://github.com/skeshri09/pothole-measure-api,3855,,,,,
+kth-vyu/detection_potholes_yolov8n,0,3,Jupyter Notebook,2023-02-27,https://github.com/kth-vyu/detection_potholes_yolov8n,814,yolov8n,,,,
+ChiragBellara/SQM_Street_Quality_Mapper,0,0,JavaScript,2024-09-06,https://github.com/ChiragBellara/SQM_Street_Quality_Mapper,7216,,,,,f1-9
+avxway/pothole-detection-system,0,1,Jupyter Notebook,2026-02-26,https://github.com/avxway/pothole-detection-system,2806,yolov8,,,,
+rahul-ez/road-guardian,0,1,Jupyter Notebook,2026-08-30,https://github.com/rahul-ez/road-guardian,9732,1200x550; mobilenet; ssd; yolov8,,,,
+recursive-rebelers/FloodTwin-HIL,0,1,Python,2026-09-17,https://github.com/recursive-rebelers/FloodTwin-HIL,10848,,,,,
+X4ndar/AI_Vision,0,0,Jupyter Notebook,2026-08-03,https://github.com/X4ndar/AI_Vision,10099,yolo11s; yolov8s,,74.5,,mAP50 0.745
+TarunMalepati99/AI_Driven_Pothole_Detection_for_Safer_Autonomous_Navigation,0,0,Python,2026-04-07,https://github.com/TarunMalepati99/AI_Driven_Pothole_Detection_for_Safer_Autonomous_Navigation,5851,yolov8,,,,
+vincenzo-afk/VisionX,0,34,Python,2026-08-21,https://github.com/vincenzo-afk/VisionX,6258,epochs 50; yolov8; yolov8n,,,,
+hariprasath-v/AV-Dataverse-Hack-Build-an-AI-Model-to-Save-Lives,0,5,Jupyter Notebook,2023-01-16,https://github.com/hariprasath-v/AV-Dataverse-Hack-Build-an-AI-Model-to-Save-Lives,3049,fasterrcnn; resnet50; yolov7,,5.0,,mAP@[.5 | mAP[.5
+pgodlews/RoadLens,0,0,Python,2026-11-03,https://github.com/pgodlews/RoadLens,15949,,,20.0,,"map, by street name, by ride time (""20"
+Collegiates/Smooth-Cruize,0,0,TypeScript,2026-04-23,https://github.com/Collegiates/Smooth-Cruize,2207,,,,,
+hari7261/road-anomaly-detection,0,1,Jupyter Notebook,2026-03-29,https://github.com/hari7261/road-anomaly-detection,3445,yolov8m; yolov8s,73.6,74.5,,Precision | 0.736 | Recall | 0.740 | mAP@0.5 | 0.745 | mAP@0.5:0.95 | 0.448
+KarimElroby7/Road-Damage-Detection,0,0,Jupyter Notebook,2026-10-30,https://github.com/KarimElroby7/Road-Damage-Detection,6775,"3,841 images; 640×640; 802 images; yolo11s; yolo26s; yolov8s",76.1,65.4,85.0,"mAP50 **0.654 | mAP50-95 **0.376 | precision **0.761 | mAP50 | mAP50 | Precision | Recall | Mean IoU | GPU FPS (FP16 | accuracy.png"" width=""85% | accuracy** (mAP50"
+Rinkesh-8/YOLO_Potholes-Detection,0,0,Jupyter Notebook,2023-10-28,https://github.com/Rinkesh-8/YOLO_Potholes-Detection,85,yolov8_potholes,,,,
+Tayab-Ahamed/Pothole-Detection,1,0,Python,2026-10-27,https://github.com/Tayab-Ahamed/Pothole-Detection,6386,epochs 100; yolov8; yolov8l; yolov8m; yolov8n; yolov8s,,,,
+pyresearch/Pothole-Predicament-Measuring-Dimensions-and-Predicting-Sizes-with-YOLOv12,0,0,,2026-01-06,https://github.com/pyresearch/Pothole-Predicament-Measuring-Dimensions-and-Predicting-Sizes-with-YOLOv12,264,yolov12,,,,
+nguy3ntt/yolo_pothole,0,0,Jupyter Notebook,2026-05-03,https://github.com/nguy3ntt/yolo_pothole,1340,,,,,
+saumayraj621-sudo/IRIS,0,0,Python,2026-08-15,https://github.com/saumayraj621-sudo/IRIS,9242,yolov8,,,,
+YashChugani/cross-domain-pothole-detection,0,0,Python,2026-10-20,https://github.com/YashChugani/cross-domain-pothole-detection,5685,224x224; resnet; yolo11s,,,,
+arihant-jain-09/Pothole-Detection-FRCNN-YOLO,0,1,Jupyter Notebook,2021-10-29,https://github.com/arihant-jain-09/Pothole-Detection-FRCNN-YOLO,353,,,,,
+vanshiiii11/pothole-detection,0,0,TypeScript,2026-10-11,https://github.com/vanshiiii11/pothole-detection,9153,,,,,
+bhoomikahm-666/IoT-Pothole-Detection-Mapping-System,0,0,,2026-10-12,https://github.com/bhoomikahm-666/IoT-Pothole-Detection-Mapping-System,4481,,,,,
+deepakgowdak836/pothole-detection-using-CNN,0,1,Python,2025-11-29,https://github.com/deepakgowdak836/pothole-detection-using-CNN,802,,,,,
+MarwanAbdellah/Potholes_detection_YOLOv11,0,0,Jupyter Notebook,2026-08-05,https://github.com/MarwanAbdellah/Potholes_detection_YOLOv11,4790,64 epochs; yolov11; yolov11l; yolov11m,,,,
+prajuktahaha/road-pothole-monitor,0,1,C++,2026-10-04,https://github.com/prajuktahaha/road-pothole-monitor,1270,,,,,
+MENT0Z/Smart-Pothole-Detection-ML,0,0,,2024-04-10,https://github.com/MENT0Z/Smart-Pothole-Detection-ML,124,,,,,
+DEVANAND-JAYARAMAN/SmartRoadAI-PotholeDetection,0,0,Jupyter Notebook,2026-07-08,https://github.com/DEVANAND-JAYARAMAN/SmartRoadAI-PotholeDetection,690,resnet18,,,,
+PAWANKRISHNA28/POTHOLE-ai,0,0,Python,2026-10-18,https://github.com/PAWANKRISHNA28/POTHOLE-ai,22368,mobilenet,,,,
+SharanKalyan/Pothole-Detection-YoloV5,0,0,Python,2026-02-14,https://github.com/SharanKalyan/Pothole-Detection-YoloV5,837,yolov5; yolov5x6,,,,
+HARDY-X4/Pothole-Detection-Using-Image-Processing,0,0,,2026-06-21,https://github.com/HARDY-X4/Pothole-Detection-Using-Image-Processing,1783,yolov8,,,,
+ModuForgeX/PWA_Download,0,0,JavaScript,2026-08-15,https://github.com/ModuForgeX/PWA_Download,0,,,,,
+ponshivavel/road-monitoring-system,0,0,HTML,2026-08-03,https://github.com/ponshivavel/road-monitoring-system,2047,,,,,
+charigardash/PotholesDetectionYOLOv8,0,0,Jupyter Notebook,2024-08-16,https://github.com/charigardash/PotholesDetectionYOLOv8,1726,imgsz=640; yolov8; yolov8m,,,,f16
+AravindSajuKrishna/Pothole-Detection-System,0,0,Python,2026-06-02,https://github.com/AravindSajuKrishna/Pothole-Detection-System,1383,yolov8,,,,
+Mindkerchief/Phol,0,0,Jupyter Notebook,2026-07-17,https://github.com/Mindkerchief/Phol,2985,,,,,f11 | f11
+ddrlve/pothole-detection,0,0,Jupyter Notebook,2026-09-07,https://github.com/ddrlve/pothole-detection,8093,,45.2,,87.4,Accuracy | 0.874 | Precision | 0.452 | Recall | 0.619 | F1 | 0.687
+ethical0101/RDD-YOLO,0,0,Python,2026-10-18,https://github.com/ethical0101/RDD-YOLO,15326,"10 epochs; 180 epochs; 2,023 images; 40 epochs; 634 images; yolo-2ea44f; yolo26; yolo26n; yolo26s; yolov8; yolov8x",65.8,64.2,30.0,mAP@50-64.23% | mAP@50** | **64.23 % | mAP@50-95 | 33.39 % | Precision | 65.81 % | Recall | 58.82 % | F1 | 62.12 % | mAP@50 | mAP@50 | accuracy (differences < 0.3 | mAP@50 | mAP@50 with YOLOv8
+Tejdeep-67/safe-roads,0,0,TypeScript,2026-11-03,https://github.com/Tejdeep-67/safe-roads,16369,yolov8; yolov8n,35.0,68.0,,mAP saved inside the checkpoint (0.68 | mAP@50 | mAP@50 | Precision @0.35 | Recall @0.35 | recall 0.19 | mAP@50 | recall ~0.28
+shazimjaved/Advance-Pothole-Detection-System,0,0,Python,2026-09-07,https://github.com/shazimjaved/Advance-Pothole-Detection-System,6713,1280x720; yolo-v8; yolo26; yolov8; yolov8_result,,,,
+BoujeeEnjinia1701/potholelog,0,0,Python,2026-10-03,https://github.com/BoujeeEnjinia1701/potholelog,13025,160 x 110,,,,
+tamaraw01/Pothole-Segmentation,0,1,Jupyter Notebook,2026-11-01,https://github.com/tamaraw01/Pothole-Segmentation,4594,768 x 768,,,,
+Aly-EL-Badry/Pothole-Detection,0,1,Jupyter Notebook,2025-05-07,https://github.com/Aly-EL-Badry/Pothole-Detection,1352,yolov5; yolov8,,,,
+Sri-Lohith-Mulugu/PotHoleDetection,0,0,JavaScript,2026-04-03,https://github.com/Sri-Lohith-Mulugu/PotHoleDetection,4706,,,,,
+Aminem2832/pothole-reporter,0,0,HTML,2026-10-12,https://github.com/Aminem2832/pothole-reporter,7247,,,,,
+Sam3360/technovation_PWA,1,1,JavaScript,2026-10-13,https://github.com/Sam3360/technovation_PWA,0,,,,,
+zenwav/Pothole-detection-using-smartphone-A-Driver-Assistant,1,13,Dart,2023-04-20,https://github.com/zenwav/Pothole-detection-using-smartphone-A-Driver-Assistant,1032,,,3.7,,map application: http://3.7
+HariOm297/Pothole-Detection-System,0,0,Jupyter Notebook,2026-09-22,https://github.com/HariOm297/Pothole-Detection-System,8453,200 images; 2022 images; 50 epochs; yolov8; yolov8s,100.0,95.0,,Precision | Recall | mAP@0.5 | mAP@0.5:0.95 | precision by hand on ~100
+Vatsal-Mohan-Arya/AsphaltSense,0,1,TypeScript,2026-10-18,https://github.com/Vatsal-Mohan-Arya/AsphaltSense,5804,,,,,
+warstad11/pothole,0,3,Python,2026-08-26,https://github.com/warstad11/pothole,10765,faster r-cnn; resnet18; yolov8,,,,F1 0.622
+VivekVagale/road-hazard,0,2,HTML,2026-10-05,https://github.com/VivekVagale/road-hazard,5765,50 epochs; 775 images; epoch 0; epoch 32; epoch 40; epoch 50; yolo11; yolo11n; yolo11s,,50.0,,mAP@0.5 from 0.267 | mAP@0.5 | mAP@0.5 | mAP is too noisy to pick checkpoints (YOLO11
+khoa-na/pothole-gps-localization,0,0,Python,2026-08-05,https://github.com/khoa-na/pothole-gps-localization,12005,128 × 128; 512 × 512; yolo26n; yolo26n_seg,,87.1,,"mAP@0.5 | 87.1% | mAP@0.5, independent Mendeley video dataset | 38.5% | Recall@1 | Recall@1"
+rodgerstar/indian-potholes,0,0,Go,2025-10-06,https://github.com/rodgerstar/indian-potholes,0,,,,,
+AD-Styles/yolov5-pothole-detector,0,1,Python,2026-04-27,https://github.com/AD-Styles/yolov5-pothole-detector,4365,100 epoch; 100 epochs; epochs: 100; yolov5; yolov5s; yolov5를,,50.0,,"mAP50` | IoU 50% | mAP50-95` | IoU 50 | mAP@0.5`는 빠르게 고점을 찍었지만, 픽셀 단위의 정밀도를 요구하는 `mAP@0.5"
+nishantparwani/craterscope,0,0,Python,2026-10-18,https://github.com/nishantparwani/craterscope,9488,133 images; 665 images,100.0,45.0,,precision / recall / F1 | Precision | Recall | F1 | map makes detected boxes about 45 % | precision / recall / F1
+Deepak-tonupunuri/SMARTPHONE-BASED-POTHOLE-DETECTION-AND-ALERT-SYSTEM,0,0,Python,2026-08-03,https://github.com/Deepak-tonupunuri/SMARTPHONE-BASED-POTHOLE-DETECTION-AND-ALERT-SYSTEM,6174,,89.0,,90.0,Accuracy | 90% | Precision | 89% | Recall | 88% | F1-Score | 88% | accuracy of **90%
+MMujtabaX/RoadGuard-AI-Pothole-Detection,0,0,Jupyter Notebook,2026-10-01,https://github.com/MMujtabaX/RoadGuard-AI-Pothole-Detection,8815,271 images; epoch 47; yolov8; yolov8s,66.8,50.0,,Precision | **0.668 | Recall | 0.451 | F1-score | 0.539 | mAP@0.5 and mAP@0.5 | Recall is the main weakness** (0.45
+sivakanth1/Detecting_Road_Damage,0,8,Jupyter Notebook,2025-12-19,https://github.com/sivakanth1/Detecting_Road_Damage,13922,"1,189 images; 100 epochs; 1080×1080; 200 epochs; 21,983 images; 4040×2035; 512×512; 600×600; 640×640; 720×720; epoch 100; epoch 200; yolov7; yolov7_dataconversion; yolov7_training; yolov7all6; yolov7all61",68.7,95.0,,mAP@0.5** and **31.65% | mAP@0.5:0.95** in detecting 4 | mAP@0.5** | **63.85% | mAP@0.5:0.95** | **31.65% | Precision** | **68.67% | Recall** | **57.49% | Precision | Recall | mAP@0.5 | mAP@0.5:0.95 | mAP@0.5 | mAP@0.5
+overhaulk/road-damage-detection-mlops,0,0,Jupyter Notebook,2026-07-08,https://github.com/overhaulk/road-damage-detection-mlops,2862,yolov8; yolov8_mlops_colab; yolov8m; yolov8n; yolov8s,80.7,81.4,,mAP50 | 0.8141 | mAP50-95 | 0.4547 | Precision | 0.8074 | Recall | 0.7366
+SamaIsmail91/Road-Damage-Detection,1,0,Jupyter Notebook,2026-07-16,https://github.com/SamaIsmail91/Road-Damage-Detection,7569,epochs 150; yolo11; yolo11s; yolov8; yolov8s; yolov9; yolov9s,,95.0,,mAP50-95 | mAP50 / mAP50 | mAP50-95
+zerochirou/hg-model,0,0,Python,2026-09-01,https://github.com/zerochirou/hg-model,2244,,,,,
+almuzahidseyam/Pothole-Detection-Mapping,0,1,Python,2026-11-03,https://github.com/almuzahidseyam/Pothole-Detection-Mapping,5659,,,,,
+AriyaArKa/Prediction-Models,0,0,Jupyter Notebook,2025-03-25,https://github.com/AriyaArKa/Prediction-Models,3182,epochs=70; imgsz=640; yolov5; yolov8; yolov8m; yolov8pothole,,,,
+CoderKrish15/smartroad-ai,0,0,HTML,2026-06-23,https://github.com/CoderKrish15/smartroad-ai,6049,yolov8,,,,
+jeetgoyal80/SafeVision-AI,0,6,Jupyter Notebook,2025-10-22,https://github.com/jeetgoyal80/SafeVision-AI,8090,yolov8,,,,
+Rishabh-bgp/machine-learning-part-3,0,0,Jupyter Notebook,2026-11-02,https://github.com/Rishabh-bgp/machine-learning-part-3,8974,"2,009 images; 30 epochs; 640 × 360; yolo11; yolo11n",100.0,95.0,,"mAP), predictions, ONNX export | `yolo11 | Precision | Recall | mAP50 | mAP50-95 | Precision–recall curves"" width=""100% | F1_curve.png"" alt=""F1"
+dparikh79/Pothole-Detector-Using-ROS,0,1,Jupyter Notebook,2026-05-16,https://github.com/dparikh79/Pothole-Detector-Using-ROS,10246,256 x 256; 256x256; 50 epochs; faster r-cnn; resnet,,,,f1/camera1 | f1 |--->| /bot_urdf1 | f1/camera1
+mzsv/Hackaton_GoogleCloudDayLisbon2024,0,0,,2024-07-07,https://github.com/mzsv/Hackaton_GoogleCloudDayLisbon2024,2756,,,,,
+eshan-sud/pothole-detection,0,0,Jupyter Notebook,2026-06-29,https://github.com/eshan-sud/pothole-detection,3316,2818 images; 30 epochs; 50 epochs; 604 images,98.0,,97.3,Accuracy: 97.35% | Precision: 97% | Recall: 99% | F1-Score: 98% | Accuracy: 95.03% | Precision: 94% | Recall: 97% | F1-Score: 96% | Accuracy | 97.35% | Precision (Normal) | 97% | Recall (Normal) | 99% | F1-Score (Normal) | 98%
+AMROAMRO404/Pothole-street-detection,0,0,Jupyter Notebook,2026-09-15,https://github.com/AMROAMRO404/Pothole-street-detection,4262,detectron; faster r-cnn; yolov5; yolov5_detection_grid; yolov5_detection_single; yolov5_learning_metrics; yolov5l,50.0,95.0,,"precision, recall, mAP@0.5 | mAP@0.5:0.95"
+mahalanobis2012/potholeai,0,0,TypeScript,2026-09-05,https://github.com/mahalanobis2012/potholeai,1450,,,,,
+Sam3360/TermsAndConditionsModuForgeX_TechnovationEdition,0,1,HTML,2026-10-13,https://github.com/Sam3360/TermsAndConditionsModuForgeX_TechnovationEdition,0,,,,,
+KidOfCoding/-PotholeAnomaly,0,0,Python,2025-11-18,https://github.com/KidOfCoding/-PotholeAnomaly,4446,512×512,,,,
+abdullah-habeeb/pothole,0,0,TypeScript,2026-01-06,https://github.com/abdullah-habeeb/pothole,6933,,,,,
+wrecking-tuba/Road_Detection_YOLOV5,0,0,Jupyter Notebook,2025-12-18,https://github.com/wrecking-tuba/Road_Detection_YOLOV5,5035,1200 × 1600; 3024 × 4032; yolov5,,,,
+charanyadavkandhi/pothole_SIH,0,0,HTML,2026-06-15,https://github.com/charanyadavkandhi/pothole_SIH,0,,,,,
+ronak-create/VMC-RoadDamageDetection,0,2,TypeScript,2025-12-09,https://github.com/ronak-create/VMC-RoadDamageDetection,30780,640 × 640; yolov8,100.0,100.0,,mAP@0.5 | Peak F1 | F1 score (overall)** | ~0.57 | Precision** | ~1.00 | Recall** | ~0.85 | F1 Curve](BoxF1 | mAP@0.5 = 0.575 | precision achieved near ~0.95
+akshxyjagtap/RoadGuardian-Pothole-Detection-System-with-Dashboard,0,1,HTML,2024-09-01,https://github.com/akshxyjagtap/RoadGuardian-Pothole-Detection-System-with-Dashboard,4237,yolov4; yolov4_tiny,,,,
+dev-dipeshkumar/CivicLens,0,0,TypeScript,2026-08-20,https://github.com/dev-dipeshkumar/CivicLens,8217,yolov8,,,,
+Sampath123123/Pothole-Detection,0,0,Python,2026-09-25,https://github.com/Sampath123123/Pothole-Detection,2328,,,,,
+esra-yasar/Road-Damage-Detection-Edge-AI,0,0,Python,2026-10-08,https://github.com/esra-yasar/Road-Damage-Detection-Edge-AI,4206,50 epochs; yolov8; yolov8s,51.0,31.0,,mAP@50 | **0.31 | mAP@50-95 | **0.16 | Precision | 0.51 | Recall | 0.33
+Shushruth18/pothole-detection-project,0,0,Python,2026-10-07,https://github.com/Shushruth18/pothole-detection-project,6319,30 epochs; epochs 30; imgsz 512; yolov8n,62.8,95.0,,Precision | 0.6285 | Recall | 0.6990 | mAP@50 | 0.7207 | mAP@50–95
+mohanreddythippireddy14-cell/Pothole_detection,0,0,Python,2026-10-27,https://github.com/mohanreddythippireddy14-cell/Pothole_detection,14716,"1,986 images; 40 images; 400×300; 665 images; 720×720; epoch 60; yolov8; yolov8n; yolov8n_pothole_best; yolov8n_pothole_v2_final_best; yolov8n_seg_pothrgbd_best",50.0,100.0,100.0,accuracy against the 1 | accuracy 52.5% | Precision | Recall | mAP@50 | mAP@50:95 | mAP@50 is not valid.** The v1 | mAP@50 ≈ 0.73 | Precision | Recall | mAP@50 | mAP@50:95
+shubh-07-lk/Realtime-Pothole-Detection-Using-ComputerVision,0,1,Python,2026-08-25,https://github.com/shubh-07-lk/Realtime-Pothole-Detection-Using-ComputerVision,4774,yolo v5; yolov8n,,,,
+siddhant-savant/ml-object-detection-potholes-tf1,0,0,Python,2025-09-04,https://github.com/siddhant-savant/ml-object-detection-potholes-tf1,3469,mobilenet; ssd,,,,
+suharikaramishetty/pothole-detection,0,0,JavaScript,2026-05-18,https://github.com/suharikaramishetty/pothole-detection,10180,yolov8,,,,
+drsiyaoshao-sudo/obsolete-SaaS-pothole-detect,0,0,Python,2026-05-26,https://github.com/drsiyaoshao-sudo/obsolete-SaaS-pothole-detect,3839,yolov8,,,,
+xuwuyi51/road-inspect,0,1,Python,2026-09-19,https://github.com/xuwuyi51/road-inspect,11997,30 epoch; epochs 15; epochs 30; imgsz 320; yolo11n; yolo12s; yolo12s_rdd,,93.5,,mAP50 0.9345 | mAP50 **0.9125
+Krishankant-Dixit/Pothole-Detection-System,0,3,TypeScript,2025-12-25,https://github.com/Krishankant-Dixit/Pothole-Detection-System,1873,,,,,
+adesiddarthanaik/AI-Blind-Navigation-System,0,1,Python,2026-04-23,https://github.com/adesiddarthanaik/AI-Blind-Navigation-System,3048,yolov5; yolov5s,,,,
+dilshankarunarathne/smart-road-condition-checker,0,4,Jupyter Notebook,2024-07-29,https://github.com/dilshankarunarathne/smart-road-condition-checker,4118,,,,,
+PrerithM/Pothole-Tracker-Bot,0,0,JavaScript,2026-10-08,https://github.com/PrerithM/Pothole-Tracker-Bot,9345,,,20.0,,Map%20
+KarnJadhav/PotholeNet,0,0,JavaScript,2026-11-03,https://github.com/KarnJadhav/PotholeNet,28629,"1,588 images; 100 epochs; 2022 images; 640×640; epochs 100; imgsz 640; imgsz=640; yolo11m; yolo11n; yolo11n_v1; yolo11s",77.2,95.0,,Precision | 0.772 | Recall | 0.659 | mAP50 | 0.754 | mAP50-95 | 0.491 | Precision | Recall | mAP50 | mAP50-95 | mAP50-95
+vivekkj123/pothole-tracker,0,0,C,2024-04-27,https://github.com/vivekkj123/pothole-tracker,1328,yolov4,,,,
+rossriserose/VMC-RoadDamageDetection,0,0,TypeScript,2026-01-09,https://github.com/rossriserose/VMC-RoadDamageDetection,30780,640 × 640; yolov8,100.0,100.0,,mAP@0.5 | Peak F1 | F1 score (overall)** | ~0.57 | Precision** | ~1.00 | Recall** | ~0.85 | F1 Curve](BoxF1 | mAP@0.5 = 0.575 | precision achieved near ~0.95
+IhsanKT/road-damage-detector,1,0,Python,2026-08-09,https://github.com/IhsanKT/road-damage-detector,12861,60 epochs; yolo26; yolo26_rdd; yolo26n; yolov8; yolov8_small_rdd; yolov8s,,50.0,,mAP@50 | mAP@50 is the realistic band** for 4
+jcicaaa3-cloud/LiteRaceSegNet-V11,0,0,Python,2026-05-25,https://github.com/jcicaaa3-cloud/LiteRaceSegNet-V11,10802,mobilenetv3,,,,
+DebarpitMohanta/road-risk-detection-system,0,0,Python,2026-07-07,https://github.com/DebarpitMohanta/road-risk-detection-system,1215,yolov8,,,,
+dipeshkewat/City-Eye,0,0,JavaScript,2026-10-23,https://github.com/dipeshkewat/City-Eye,9324,yolov8; yolov8n,,,,
+BevanTri/pothole-detection-yolo,0,0,Jupyter Notebook,2026-09-26,https://github.com/BevanTri/pothole-detection-yolo,4087,epochs 50; imgsz 512; imgsz=640; yolo-v8n; yolov8; yolov8n,80.0,82.4,,mAP50 | **0.824 | mAP50-95 | 0.539 | Precision / Recall | 0.80
+LincolnSerrao12/NAGARDRISHTI,0,0,Python,2026-10-25,https://github.com/LincolnSerrao12/NAGARDRISHTI,1271,665 images; yolov8,,,,

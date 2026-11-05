@@ -1,6 +1,6 @@
 # v8: CLEANED public data (tiny boxes removed, Norway/Czech dropped, Japan halved,
 #     duplicates + confident class errors fixed) + checked Kolhapur frames. Test set unchanged.
-path: dataset
+path: F:/POTHOLE_PROJECT/dataset
 train: [images/train_clean, images/train_kol_v7]
 val: images/val_clean
 test: images/test

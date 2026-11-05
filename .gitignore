@@ -1,22 +1,38 @@
 # data & private material (not in the repo: datasets, field videos with faces/number plates)
-dataset/images/
-dataset/labels/
+dataset/
+dataset_clean/
+dataset_verified/
 new testing dataset/
 kolhapur_labeling/*/
 fix_labels/*/
+fix_labels/*.jpg
 runs/
+scratch/
+tools/
+weights/
 backend/media/
 backend/models_cache/
 qa/*.jpg
+qa/kol_compare/
+qa/kol_review/
+qa/label_review/
+qa/missed/
+qa/sheets/
+qa/sim/
+qa/_eval_v11_tmp/
 *.log
+
 # build / env
 node_modules/
-dashboard/dist/
 __pycache__/
 *.pyc
 .env
-dataset_verified/
 manual_labeling/batches/
 manual_labeling/POTHOLEDATASET/
 manual_labeling/_frozen_files/
 *.db
+.acl_recovery/
+.claude/
+deploy/render_repo/
+deploy/hf_space/
+scripts/*.pt

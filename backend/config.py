@@ -7,8 +7,8 @@ BACKEND_DIR = Path(__file__).resolve().parent
 MEDIA_DIR = BACKEND_DIR / "media"                                # uploaded + annotated images
 MEDIA_DIR.mkdir(exist_ok=True)
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "road_damage")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://pothole_admin:aTwRZO0bZZCLFIMK@cluster0.lag8x5i.mongodb.net/pothole_detection?retryWrites=true&w=majority")
+DB_NAME = os.getenv("DB_NAME", "pothole_detection")
 
 # Model: first file that exists is used. best.pt appears when training finishes.
 MODEL_CANDIDATES = [

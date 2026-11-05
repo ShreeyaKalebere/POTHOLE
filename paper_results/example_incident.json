@@ -1,0 +1,72 @@
+{
+ "_id": "6ae1c46e674f902c59fb8c71",
+ "incident_code": "KOP-000747",
+ "damage_type": "pothole",
+ "severity": "High",
+ "severity_score": 0.3855,
+ "confidence": 0.823,
+ "location": {
+  "type": "Point",
+  "coordinates": [
+   74.2389611,
+   16.6991889
+  ]
+ },
+ "zone": "Shahupuri",
+ "status": "Reported",
+ "assigned_to": null,
+ "reports_count": 12,
+ "source": "kolhapur_field",
+ "images": [
+  {
+   "url": "/media/field/shubh_IMG_20261027_142622561.jpg",
+   "annotated_url": "/media/field/shubh_IMG_20261027_142622561_det.jpg",
+   "bbox": [
+    885,
+    625,
+    1562,
+    1080
+   ],
+   "confidence": 0.546,
+   "severity": "High",
+   "at": "2026-10-27 14:26:22"
+  },
+  {
+   "url": "/media/field/shubh_IMG_20261027_142628541.jpg",
+   "annotated_url": "/media/field/shubh_IMG_20261027_142628541_det.jpg",
+   "bbox": [
+    1210,
+    426,
+    1705,
+    833
+   ],
+   "confidence": 0.603,
+   "severity": "High",
+   "at": "2026-10-27 14:26:28"
+  }
+ ],
+ "detected_at": "2026-10-27 14:26:22",
+ "updated_at": "2026-10-27 14:26:34",
+ "demo": true,
+ "history": [
+  {
+   "at": "2026-10-27 14:26:22",
+   "status": "Reported",
+   "by": "system",
+   "note": "Detected via kolhapur_field"
+  },
+  {
+   "at": "2026-10-27 14:26:28",
+   "status": "Reported",
+   "by": "system",
+   "note": "Detected again (High, conf 0.603)"
+  },
+  {
+   "at": "2026-10-27 14:26:30",
+   "status": "Reported",
+   "by": "system",
+   "note": "Detected again (High, conf 0.753)"
+  }
+ ],
+ "field_test": true
+}

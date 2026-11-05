@@ -1,35 +1,5 @@
 # Computer Vision & Deep Learning Based Road Damage and Municipal Reporting System
 
-YOLO11 + FastAPI + MongoDB + React system that detects **potholes** and **alligator cracks** from road
-photos and live phone video, estimates severity, records GPS, and gives municipal officers a dashboard
-(map, repair worklist, inspect & dispatch, PDF/CSV reports).
-
-## Results (test set: 2,652 unseen images)
-
-| Model | Training change | mAP@50 | Precision | Recall |
-|---|---|---|---|---|
-| **v1** | baseline YOLO11s, 640 px, 107 epochs | **0.639** | 0.677 | 0.588 |
-| v2 | 960 px + Indian images x2 | 0.608 | 0.673 | 0.572 |
-| v3 | rain/night/blur augmentation | 0.616 | 0.670 | 0.559 |
-| v4 | label fixes | 0.626 | 0.682 | 0.572 |
-| v5 | Kolhapur model pseudo-labels | 0.618 | 0.667 | 0.575 |
-| **v6** (deployed) | Kolhapur frames, boxes reviewed | 0.623 | **0.690** | 0.567 |
-| v8 | cleaned data (tiny boxes, Norway/Czech removed) | 0.600 | 0.659 | 0.557 |
-
-Stopped early, not evaluated on test: YOLO11m (v8m, 30/40 epochs, best val mAP@50 0.524),
-v9 (YOLO11m 768 px, 3/50 epochs), v10 (YOLO11s 768 px, 4/18 epochs; its val set is inside its training data).
-All runs land between 0.60 and 0.64 on the test set - see `qa/ACCURACY_AUDIT.md` / `qa/audit_summary.md`.
-
-In progress: v11 (YOLO11s, 640 px, fresh COCO-pretrained start) on a manually verified dataset of 20,698 images
-(train 14,595 / val 3,025 / test 3,078), built with the tool in `manual_labeling/`. Not yet evaluated on test;
-per-epoch validation numbers so far are in `results/yolo11s_v11_verified/results.csv`.
-
-- Speed: ~10 ms / image on RTX 4060 (≈100 FPS), ~105 ms on CPU. Model size 19 MB.
-- Kolhapur field test (469 frames, 27 Oct 2026): v6 found ~24% more real damage than v1.
-- All epoch-by-epoch numbers: `qa/results_all_epochs.csv`; graphs and confusion matrices: `results/`.
-- Datasets and field videos are **not** in this repository (size, and faces / number plates in the videos).
-
-
 Group G3 · DYPCET Kolhapur · Guide: Mrs. S. V. Shinge
 
 ## Folder layout
