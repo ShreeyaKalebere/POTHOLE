@@ -130,9 +130,9 @@ export default function Home({ user }) {
           <h2>The AI model</h2>
           <p className="section-intro">The app runs YOLO11s at 640 px and detects two classes: pothole and alligator crack. These are measured results on images the model did not train on.</p>
           <div className="metric-grid">
-            <div className="metric peach"><b>70.2%</b><span>mAP@50</span></div>
+            <div className="metric peach"><b>75.2%</b><span>mAP@50</span></div>
             <div className="metric lemon"><b>85.1%</b><span>Precision</span></div>
-            <div className="metric mint"><b>60.5%</b><span>Recall</span></div>
+            <div className="metric mint"><b>65.5%</b><span>Recall</span></div>
             <div className="metric sky"><b>~15 ms</b><span>Per image on an RTX 4060</span></div>
           </div>
         </section>
