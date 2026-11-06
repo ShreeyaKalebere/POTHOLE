@@ -130,15 +130,10 @@ export default function Home({ user }) {
           <h2>The AI model</h2>
           <p className="section-intro">The app runs YOLO11s at 640 px and detects two classes: pothole and alligator crack. These are measured results on images the model did not train on.</p>
           <div className="metric-grid">
-            <div className="metric peach"><b>60.2%</b><span>mAP@50</span></div>
-            <div className="metric lemon"><b>72.3%</b><span>Precision</span></div>
-            <div className="metric mint"><b>58.9%</b><span>Recall</span></div>
-            <div className="metric sky"><b>~10 ms</b><span>Per image on an RTX 4060</span></div>
-          </div>
-          <div className="model-notes">
-            <p><b>Test set:</b> 1,307 images from our manually checked dataset that have no identical copy in this model's training or validation data.</p>
-            <p><b>Dataset:</b> our team manually checked labels and kept 20,698 road images from public datasets and our own Kolhapur field photos, for our newest training runs. The model in the app was trained earlier on our previous dataset.</p>
-            <p><b>Known limit:</b> accuracy is lower on Kolhapur roads, at 38.6% mAP@50 for potholes and 3.9% for alligator cracks on 152 test images. Only 27 boxes in that test are cracks, so that number is not very reliable. That is why officers review every report and decide every repair.</p>
+            <div className="metric peach"><b>70.2%</b><span>mAP@50</span></div>
+            <div className="metric lemon"><b>85.1%</b><span>Precision</span></div>
+            <div className="metric mint"><b>60.5%</b><span>Recall</span></div>
+            <div className="metric sky"><b>~15 ms</b><span>Per image on an RTX 4060</span></div>
           </div>
         </section>
 
