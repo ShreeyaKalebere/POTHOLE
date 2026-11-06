@@ -12,14 +12,16 @@ from bson import ObjectId
 import os
 import tempfile
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import accounts
 import auth
 import media_store
+import panels
 from config import DASHBOARD_DIST, SESSION_DAYS, STATUSES, SEVERITIES
 from db import incidents, init_indexes, next_incident_code, client
 from detector import detector
@@ -44,6 +46,7 @@ MAX_UPLOAD_MB = 20
 @app.on_event("startup")
 def startup():
     init_indexes()
+    accounts.init_accounts()
 
     def _load():
         try:
@@ -68,6 +71,8 @@ def serialize(inc):
     for im in inc.get("images", []):
         if isinstance(im.get("at"), datetime):
             im["at"] = im["at"].isoformat()
+    if inc.get("repair"):
+        inc["repair"] = panels._repair_json(inc["repair"])
     return inc
 
 
@@ -102,23 +107,30 @@ def oid(id_):
 
 # ------------------------------------------------------------------ login
 class LoginBody(BaseModel):
+    username: str
     password: str
 
 
 @app.get("/api/me")
 def me(request: Request):
-    return {"auth_required": auth.enabled(), "logged_in": auth.is_logged_in(request)}
+    user = auth.current_user(request)
+    return {"user": accounts.public_user(user) if user else None}
 
 
 @app.post("/api/login")
 def login(body: LoginBody, request: Request, response: Response):
-    if not auth.enabled():
-        return {"ok": True}
-    if not auth.password_ok(body.password):
-        raise HTTPException(401, "Wrong password")
-    response.set_cookie(auth.COOKIE, auth.make_token(), max_age=SESSION_DAYS * 86400,
+    username = body.username.strip().lower()
+    if panels.login_blocked(request, username):
+        raise HTTPException(429, "Too many failed attempts. Please try again in 15 minutes.")
+    user = accounts.check_login(username, body.password)
+    if user is None:
+        panels.login_failed(request, username)
+        raise HTTPException(401, "Wrong username or password")
+    panels.login_succeeded(request, username)
+    response.set_cookie(auth.COOKIE, auth.make_token(user), max_age=SESSION_DAYS * 86400,
                         httponly=True, samesite="lax", secure=auth.is_https(request))
-    return {"ok": True}
+    accounts.log_activity(auth.signature_of(user), "Logged in")
+    return {"user": accounts.public_user(user)}
 
 
 @app.post("/api/logout")
@@ -138,12 +150,14 @@ def media(name: str):
 
 # ------------------------------------------------------------------ routes
 @app.get("/api/health")
-def health():
+def health(request: Request):
     try:
         client.admin.command("ping")
         mongo = True
     except Exception:
         mongo = False
+    if auth.current_user(request) is None:      # public callers only learn that the service is up
+        return {"api": True, "mongo": mongo}
     return {"api": True, "mongo": mongo, "model": detector.info(),
             "live_sessions": len(live.active_sessions())}
 
@@ -209,11 +223,11 @@ async def detect(file: UploadFile = File(...), lat: Optional[float] = Form(None)
 
 
 @app.get("/api/incidents")
-def list_incidents(damage_type: Optional[str] = None, severity: Optional[str] = None,
+def list_incidents(request: Request, damage_type: Optional[str] = None, severity: Optional[str] = None,
                    status: Optional[str] = None, zone: Optional[str] = None,
                    date_from: Optional[str] = None, date_to: Optional[str] = None,
                    sort: str = "priority", limit: int = Query(500, le=5000), skip: int = 0):
-    q = build_filter(damage_type, severity, status, zone, date_from, date_to)
+    q = auth.scope(request.state.user, build_filter(damage_type, severity, status, zone, date_from, date_to))
     items = list(incidents.find(q, {"history": 0}).sort("detected_at", -1).skip(skip).limit(limit))
     if sort == "priority":   # open + high severity + many reports first
         items.sort(key=lambda i: (i["status"] == "Repaired", -SEVERITY_RANK[i["severity"]],
@@ -222,9 +236,9 @@ def list_incidents(damage_type: Optional[str] = None, severity: Optional[str] = 
 
 
 @app.get("/api/incidents/{incident_id}")
-def get_incident(incident_id: str):
+def get_incident(incident_id: str, request: Request):
     inc = incidents.find_one({"_id": oid(incident_id)})
-    if not inc:
+    if not inc or not auth.in_scope(request.state.user, inc):
         raise HTTPException(404, "Incident not found")
     return serialize(inc)
 
@@ -234,15 +248,16 @@ class IncidentUpdate(BaseModel):
     assigned_to: Optional[str] = None
     severity: Optional[str] = None
     note: Optional[str] = None
-    by: str = "officer"
 
 
 @app.patch("/api/incidents/{incident_id}")
-def update_incident(incident_id: str, body: IncidentUpdate):
+def update_incident(incident_id: str, body: IncidentUpdate, request: Request):
+    user = request.state.user
     inc = incidents.find_one({"_id": oid(incident_id)})
-    if not inc:
+    if not inc or not auth.in_scope(user, inc):
         raise HTTPException(404, "Incident not found")
-    s = {"updated_at": datetime.now()}
+    who = auth.signature_of(user)
+    s = {"updated_at": datetime.now(), "needs_review": False}
     notes = []
     if body.status:
         if body.status not in STATUSES:
@@ -259,14 +274,15 @@ def update_incident(incident_id: str, body: IncidentUpdate):
         notes.append(f"Assigned to {body.assigned_to or 'nobody'}")
     if body.note:
         notes.append(body.note)
-    hist = {"at": s["updated_at"], "status": s.get("status", inc["status"]), "by": body.by,
+    hist = {"at": s["updated_at"], "status": s.get("status", inc["status"]), "by": who,
             "note": " | ".join(notes) or "Updated"}
     incidents.update_one({"_id": inc["_id"]}, {"$set": s, "$push": {"history": hist}})
+    accounts.log_activity(who, "Updated incident", inc["incident_code"], hist["note"])
     return serialize(incidents.find_one({"_id": inc["_id"]}))
 
 
 @app.delete("/api/incidents/{incident_id}")
-def delete_incident(incident_id: str):
+def delete_incident(incident_id: str, request: Request):
     """Permanently removes one incident and its photos (e.g. a false detection)."""
     inc = incidents.find_one({"_id": oid(incident_id)})
     if not inc:
@@ -278,12 +294,13 @@ def delete_incident(incident_id: str):
                                                       "$or": [{"images.url": url}, {"images.annotated_url": url}]}):
                 media_store.delete(url)
     incidents.delete_one({"_id": inc["_id"]})
+    accounts.log_activity(auth.signature_of(request.state.user), "Deleted incident", inc["incident_code"])
     return {"deleted": inc["incident_code"]}
 
 
 @app.get("/api/stats")
-def stats(zone: Optional[str] = None, days: int = 30):
-    q = build_filter(zone=zone)
+def stats(request: Request, zone: Optional[str] = None, days: int = 30):
+    q = auth.scope(request.state.user, build_filter(zone=zone))
 
     def count_by(field):
         return {r["_id"]: r["n"] for r in incidents.aggregate(
@@ -311,29 +328,29 @@ def stats(zone: Optional[str] = None, days: int = 30):
     }
 
 
-def _export_items(**f):
-    items = list(incidents.find(build_filter(**f)))
+def _export_items(user, **f):
+    items = list(incidents.find(auth.scope(user, build_filter(**f))))
     items.sort(key=lambda i: (i["status"] == "Repaired", -SEVERITY_RANK[i["severity"]], i["detected_at"]))
     return items
 
 
 @app.get("/api/export/csv")
-def export_csv(damage_type: Optional[str] = None, severity: Optional[str] = None,
+def export_csv(request: Request, damage_type: Optional[str] = None, severity: Optional[str] = None,
                status: Optional[str] = None, zone: Optional[str] = None,
                date_from: Optional[str] = None, date_to: Optional[str] = None):
-    items = _export_items(damage_type=damage_type, severity=severity, status=status, zone=zone,
+    items = _export_items(request.state.user, damage_type=damage_type, severity=severity, status=status, zone=zone,
                           date_from=date_from, date_to=date_to)
     return Response(to_csv(items), media_type="text/csv",
                     headers={"Content-Disposition": f"attachment; filename=road_damage_{datetime.now():%Y%m%d}.csv"})
 
 
 @app.get("/api/export/pdf")
-def export_pdf(damage_type: Optional[str] = None, severity: Optional[str] = None,
+def export_pdf(request: Request, damage_type: Optional[str] = None, severity: Optional[str] = None,
                status: Optional[str] = None, zone: Optional[str] = None,
                date_from: Optional[str] = None, date_to: Optional[str] = None):
     f = dict(damage_type=damage_type, severity=severity, status=status, zone=zone,
              date_from=date_from, date_to=date_to)
-    items = _export_items(**f)
+    items = _export_items(request.state.user, **f)
     st = {"total": len(items), "by_type": {}, "by_severity": {}, "by_status": {}}
     for i in items:
         for k, fld in (("by_type", "damage_type"), ("by_severity", "severity"), ("by_status", "status")):
@@ -391,6 +408,9 @@ def demo_seed(n: int = 120):
 @app.delete("/api/demo")
 def demo_clear():
     return {"deleted": incidents.delete_many({"demo": True}).deleted_count}
+
+
+app.include_router(panels.router)
 
 
 # ------------------------------------------------------------------ dashboard (built React app)

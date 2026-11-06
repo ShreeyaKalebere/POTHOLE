@@ -166,7 +166,7 @@ export default function LivePatrol() {
   return (
     <div className="live">
       <div className="live-top">
-        <Link to="/" className="live-back">Dashboard</Link>
+        <Link to="/" className="live-back">Back</Link>
         <b>Live patrol</b>
         <span className={"live-pill " + (running ? "on" : "")}>{running ? "Live" : "Stopped"}</span>
       </div>

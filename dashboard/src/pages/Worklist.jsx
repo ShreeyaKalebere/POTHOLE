@@ -40,7 +40,7 @@ export default function Worklist({ zone }) {
           <tbody>
             {items.map((i) => (
               <tr key={i.id} className={i.status === "Repaired" ? "done" : ""}>
-                <td><b>{i.incident_code}</b>{i.demo && <span className="demo">demo</span>}</td>
+                <td><b>{i.incident_code}</b>{i.demo && <span className="demo">demo</span>}{i.needs_review && <span className="review-tag">Review</span>}</td>
                 <td data-label="Type"><TypeTag t={i.damage_type} /></td>
                 <td><SevBadge s={i.severity} /></td>
                 <td data-label="Zone">{i.zone}</td>

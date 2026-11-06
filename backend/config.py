@@ -29,7 +29,9 @@ DEDUP_RADIUS_M = 15
 # ---- deployment settings (all set through environment variables in the cloud) ----
 MEDIA_BACKEND = os.getenv("MEDIA_BACKEND", "local")          # "local" or "gridfs"
 CLOUD_MAX_IMAGE_SIDE = int(os.getenv("CLOUD_MAX_IMAGE_SIDE", "1280"))
-APP_PASSWORD = os.getenv("APP_PASSWORD", "")                  # empty = no login (laptop use)
+APP_PASSWORD = os.getenv("APP_PASSWORD", "")                  # first admin password, if ADMIN_PASSWORD is not set
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 APP_SECRET = os.getenv("APP_SECRET", "")                      # signs login cookies
 SESSION_DAYS = int(os.getenv("SESSION_DAYS", "14"))
 DASHBOARD_DIST = Path(os.getenv("DASHBOARD_DIST", str(PROJECT_DIR / "dashboard" / "dist")))

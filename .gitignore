@@ -36,3 +36,4 @@ manual_labeling/_frozen_files/
 deploy/render_repo/
 deploy/hf_space/
 scripts/*.pt
+*.local.txt

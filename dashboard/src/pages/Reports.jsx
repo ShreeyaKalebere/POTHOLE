@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { Filters } from "../components";
 
-export default function Reports({ zone }) {
+export default function Reports({ zone, user }) {
   const [f, setF] = useState({});
   const [msg, setMsg] = useState("");
   const params = { ...f, zone };
@@ -31,7 +31,7 @@ export default function Reports({ zone }) {
         </div>
       </div>
 
-      <div className="card">
+      {user.role === "admin" && <><div className="card">
         <h3>Demo data</h3>
         <p className="muted">
           Demo incidents use real dataset photos at random Kolhapur locations so the dashboard can be presented
@@ -50,7 +50,7 @@ export default function Reports({ zone }) {
         <button className="btn" onClick={() => api.reloadModel().then((r) => setMsg(`Loaded ${r.weights}`)).catch((e) => setMsg(e.message))}>
           Reload model
         </button>
-      </div>
+      </div></>}
     </>
   );
 }

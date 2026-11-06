@@ -64,3 +64,12 @@ in the Space upload the new `models/final.pt` → it rebuilds by itself.
 | Login always says wrong password | check `APP_PASSWORD` secret (no spaces); restart the Space after changing secrets |
 | Phone camera does not start | open the `https://...hf.space` link directly (not inside WhatsApp's built-in browser) |
 | Very slow first load | Space was asleep — wait 1–2 min |
+
+## Accounts and panels
+
+The app has four panels: citizen (public, no login), repair team, ward officer and admin.
+
+- **First admin:** on first start, the username is `ADMIN_USERNAME` (default `admin`) and the password is `ADMIN_PASSWORD`, or `APP_PASSWORD` if that is not set. It needs at least 8 characters. Change it after your first login.
+- **Other accounts:** log in as admin and open Accounts. Do not use `seed_users.py` online.
+- **`APP_SECRET`:** set this to a long random value so logins stay secure and survive restarts.
+- **Citizen page:** anyone with the link can submit reports, limited to 10 per hour from one connection.
