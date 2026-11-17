@@ -22,8 +22,8 @@ from pathlib import Path
 import cv2
 
 import media_store
-from config import CONF_THRESHOLD, INFER_DEVICE
-from detector import boxes_to_dets
+from config import CONF_THRESHOLD, INFER_DEVICE, LIVE_IMGSZ
+from detector import Detector, boxes_to_dets
 from incident_store import upsert_incident
 
 TRACKER_CFG = str(Path(__file__).with_name("bytetrack_road.yaml"))
@@ -45,7 +45,7 @@ def _tracking_model():
     model = copy.copy(detector.model)
     model.predictor = None
     model.callbacks = {k: list(v) for k, v in detector.model.callbacks.items()}
-    return model, detector.model_path, detector.imgsz
+    return model, detector.model_path, LIVE_IMGSZ or detector.imgsz
 
 
 class TrackSession:

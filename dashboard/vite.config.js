@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     host: true, // reachable from a phone on the same Wi-Fi / hotspot
     proxy: {
-      "/api": "http://localhost:8000",
-      "/media": "http://localhost:8000",
+      "/api": "http://127.0.0.1:8000",
+      "/media": "http://127.0.0.1:8000",
     },
   },
 }));

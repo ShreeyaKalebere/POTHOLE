@@ -237,6 +237,30 @@ def test_unexpected_server_errors_come_back_as_json(monkeypatch):
     assert "ValueError" in r.json()["detail"] and "tracker could not start" not in r.json()["detail"]
 
 
+def test_live_patrol_saves_a_confirmed_pothole(monkeypatch):
+    """A damage seen in enough frames must be saved as an incident with photos (this once crashed)."""
+    import live
+
+    class FakeModel:
+        def track(self, img, **kw):
+            return [None]
+    monkeypatch.setattr(live, "_tracking_model", lambda: (FakeModel(), "test-weights", 640))
+    tracked = {**DET, "bbox": [10, 10, 30, 30], "track_id": 7}
+    monkeypatch.setattr(live, "boxes_to_dets", lambda res, w, h: [dict(tracked)])
+    c = TestClient(main.app, raise_server_exceptions=False)
+    assert c.post("/api/login", json={"username": "shahu", "password": PASSWORD}).status_code == 200
+    sid = c.post("/api/live/start").json()["session_id"]
+    replies = []
+    for _ in range(live.MIN_HITS + 1):
+        r = c.post("/api/live/frame", data={"session_id": sid, "lat": "16.704", "lng": "74.242", "save": "true"}, files=photo())
+        assert r.status_code == 200, r.text
+        replies.append(r.json())
+    assert sum(len(x["new_incidents"]) for x in replies) == 1
+    saved = incidents.find_one({"source": "live"})
+    assert saved and saved["zone"] == "Shahupuri" and saved["images"][0]["annotated_url"].startswith("/media/")
+    assert c.post("/api/live/stop", data={"session_id": sid}).json()["incidents_saved"] == 1
+
+
 def test_citizen_report_needs_valid_location_type_and_photo():
     c = session()
     assert c.post("/api/public/report", files=photo()).status_code == 400

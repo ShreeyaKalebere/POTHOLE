@@ -23,7 +23,7 @@ import accounts
 import auth
 import media_store
 import panels
-from config import DASHBOARD_DIST, SESSION_DAYS, STATUSES, SEVERITIES
+from config import CPU_THREADS, DASHBOARD_DIST, SESSION_DAYS, STATUSES, SEVERITIES
 from db import incidents, init_indexes, next_incident_code, client
 from detector import detector
 from gps import exif_gps
@@ -60,7 +60,7 @@ def startup():
             detector.load()
             t = time.time()
             detector.warmup()    # the first prediction is slow; do it now, not on someone's first photo
-            print(f"Model ready, warm-up took {time.time() - t:.1f} s", flush=True)
+            print(f"Model ready, warm-up took {time.time() - t:.1f} s, using {CPU_THREADS} CPU thread(s)", flush=True)
         except Exception as e:
             print("Model not loaded yet:", e)
     threading.Thread(target=_load, daemon=True).start()   # don't block server start

@@ -19,6 +19,8 @@ services:
         value: gridfs
       - key: LIVE_MAX_SESSIONS
         value: 1
+      - key: LIVE_IMGSZ
+        value: 320
       - key: PORT
         value: 8000
 

@@ -23,6 +23,31 @@ CONF_THRESHOLD = 0.35
 INFER_DEVICE = os.getenv("INFER_DEVICE", "0")
 CLASS_NAMES = {0: "pothole", 1: "alligator_crack"}
 
+
+def _allowed_cpus():
+    """CPUs this process may really use. In a cloud container os.cpu_count() reports the whole host,
+    while the container may only get a fraction of one CPU (Linux cgroup quota)."""
+    count = os.cpu_count() or 1
+    for path, split in (("/sys/fs/cgroup/cpu.max", True), ("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", False)):
+        try:
+            text = Path(path).read_text().split()
+            if split:
+                quota, period = text[0], text[1]
+            else:
+                quota = text[0]
+                period = Path("/sys/fs/cgroup/cpu/cpu.cfs_period_us").read_text().split()[0]
+            if quota not in ("max", "-1"):
+                return max(1, min(count, int(int(quota) / int(period) + 0.999)))
+        except (OSError, IndexError, ValueError):
+            continue
+    return count
+
+
+# CPU threads for detection. Too many threads on a small cloud CPU make every frame much slower.
+CPU_THREADS = int(os.getenv("CPU_THREADS", "0")) or max(1, min(8, _allowed_cpus() - (0 if _allowed_cpus() <= 2 else 1)))
+# Image size for Live Patrol only (0 = the size the model was trained at). 320 is about twice as fast on CPU.
+LIVE_IMGSZ = int(os.getenv("LIVE_IMGSZ", "0"))
+
 # Same damage within this distance (metres) and still open = same incident, not a new one
 DEDUP_RADIUS_M = 15
 

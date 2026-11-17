@@ -10,8 +10,14 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from config import MODEL_CANDIDATES, CONF_THRESHOLD, CLASS_NAMES, BACKEND_DIR, INFER_DEVICE
+from config import MODEL_CANDIDATES, CONF_THRESHOLD, CLASS_NAMES, BACKEND_DIR, CPU_THREADS, INFER_DEVICE
 from severity import severity_score, severity_label
+
+# Ultralytics sets torch to min(8, cpu_count - 1) threads whenever it runs on CPU. In a cloud container
+# cpu_count is the whole host, so a small CPU share ends up shared by 8 fighting threads. Use the real share.
+import ultralytics.utils as _u_utils
+import ultralytics.utils.torch_utils as _u_torch
+_u_utils.NUM_THREADS = _u_torch.NUM_THREADS = CPU_THREADS
 
 COLORS = {"Low": (80, 175, 76), "Medium": (0, 165, 255), "High": (54, 67, 244)}   # BGR
 

@@ -190,6 +190,7 @@ export default function LivePatrol() {
         last = now;
       } catch (e) {
         t.pendingSince = 0;
+        if (!run.current.on) break; // a frame still on its way after Stop is not an error
         setErr(e.message);
         await new Promise((r) => setTimeout(r, 1000));
         if (String(e.message).includes("expired")) break;
