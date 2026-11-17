@@ -33,23 +33,50 @@ export default function LivePatrol() {
   const [save, setSave] = useState(true);
   const [summary, setSummary] = useState(null);
 
+  const [busy, setBusy] = useState(false);
+  const starting = useRef(false);
+
   const secure = window.isSecureContext;
+
+  async function startCamera() {
+    const v = videoRef.current;
+    v.srcObject?.getTracks().forEach((t) => t.stop());
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    v.muted = true;
+    v.playsInline = true;
+    v.srcObject = stream;
+    if (v.readyState < 1) await new Promise((r) => v.addEventListener("loadedmetadata", r, { once: true }));
+    // Phones can interrupt the first play() while the stream settles; that is harmless, so try again once
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await v.play();
+        return;
+      } catch (e) {
+        if (e.name !== "AbortError" || attempt >= 2) throw e;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+  }
 
   useEffect(() => () => stop(), []); // stop camera when leaving the page
 
   async function start() {
+    if (starting.current || run.current.on) return; // a second tap while starting resets the video
+    starting.current = true;
+    setBusy(true);
     setErr("");
     setSummary(null);
     setLog([]);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
+      await startCamera();
     } catch (e) {
+      stopCamera();
       setErr("Camera not available: " + e.message);
+      starting.current = false;
+      setBusy(false);
       return;
     }
     if (navigator.geolocation) {
@@ -74,6 +101,9 @@ export default function LivePatrol() {
     } catch (e) {
       setErr("Backend: " + e.message);
       stopCamera();
+    } finally {
+      starting.current = false;
+      setBusy(false);
     }
   }
 
@@ -220,7 +250,7 @@ export default function LivePatrol() {
 
       <div className="live-controls">
         {!running ? (
-          <button className="btn primary big" onClick={start} disabled={!secure}>Start patrol</button>
+          <button className="btn primary big" onClick={start} disabled={!secure || busy}>{busy ? "Starting…" : "Start patrol"}</button>
         ) : (
           <button className="btn danger big" onClick={stop}>Stop</button>
         )}
