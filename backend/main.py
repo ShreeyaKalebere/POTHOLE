@@ -14,7 +14,7 @@ import tempfile
 
 from fastapi import FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -38,6 +38,12 @@ from zones import ZONES, CITY_CENTER, zone_for
 app = FastAPI(title="MargDrishti - Road Damage & Municipal Reporting API", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.middleware("http")(auth.middleware)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, exc: Exception):
+    print("Server error on", request.url.path, "-", type(exc).__name__, exc, flush=True)
+    return JSONResponse({"detail": f"Server error: {type(exc).__name__}. Please try again."}, status_code=500)
 
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 MAX_UPLOAD_MB = 20
@@ -367,6 +373,8 @@ def live_start():
         s = live.start_session()
     except RuntimeError as e:
         raise HTTPException(503, str(e))
+    except MemoryError:
+        raise HTTPException(503, "The server is out of memory. Close other Live Patrol sessions and try again.")
     return s.summary()
 
 

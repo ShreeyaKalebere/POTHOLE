@@ -37,3 +37,4 @@ deploy/render_repo/
 deploy/hf_space/
 scripts/*.pt
 *.local.txt
+*.local.json

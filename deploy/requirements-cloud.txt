@@ -8,3 +8,4 @@ ultralytics==8.4.152
 opencv-python-headless==4.11.0.86
 pillow==11.2.1
 reportlab==5.0.1
+lap==0.5.13              # used by ByteTrack in Live Patrol

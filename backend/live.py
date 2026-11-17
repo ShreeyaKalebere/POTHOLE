@@ -11,6 +11,7 @@ an incident is saved ONCE per track, after the damage is confirmed:
 The saved photo is the frame where that track had its highest confidence so far.
 Same damage seen again on a later drive is merged by GPS (incident_store, 15 m).
 """
+import os
 import threading
 import time
 import uuid
@@ -28,7 +29,7 @@ TRACKER_CFG = str(Path(__file__).with_name("bytetrack_road.yaml"))
 TRACK_CONF = 0.15        # low threshold so ByteTrack can keep weak detections attached to a track
 MIN_HITS = 3             # frames a damage must be seen before it becomes an incident
 SESSION_TIMEOUT_S = 120  # idle phone sessions are closed after 2 minutes
-MAX_SESSIONS = 3
+MAX_SESSIONS = int(os.getenv("LIVE_MAX_SESSIONS", "3"))   # each session holds its own model copy
 
 
 class TrackSession:

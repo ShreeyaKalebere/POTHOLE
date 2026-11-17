@@ -6,6 +6,18 @@ import { SEV_COLOR, TYPE_LABEL } from "../api";
 // Only one frame is "in flight" at a time, so the frame rate adapts to the network and GPU speed.
 const SEND_WIDTH = 640;
 
+// Reads a server reply. A failed request can come back as plain text, which must not crash the page.
+async function readReply(r) {
+  let body = {};
+  try {
+    body = await r.json();
+  } catch {
+    body = { detail: r.status >= 500 ? "The server had a problem. Please try again in a minute." : r.statusText };
+  }
+  if (!r.ok) throw new Error(body.detail || r.statusText || `Error ${r.status}`);
+  return body;
+}
+
 export default function LivePatrol() {
   const videoRef = useRef(null);
   const overlayRef = useRef(null);
@@ -54,8 +66,7 @@ export default function LivePatrol() {
     }
     try {
       const r = await fetch("/api/live/start", { method: "POST" });
-      if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
-      const s = await r.json();
+      const s = await readReply(r);
       run.current = { ...run.current, on: true, sid: s.session_id, save };
       setStats(s);
       setRunning(true);
@@ -89,8 +100,7 @@ export default function LivePatrol() {
       }
       try {
         const r = await fetch("/api/live/frame", { method: "POST", body: fd });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.detail || r.statusText);
+        const d = await readReply(r);
         if (!run.current.on) break;
         drawBoxes(d.detections, d.frame_size);
         setStats(d);
@@ -157,7 +167,7 @@ export default function LivePatrol() {
       fd.append("session_id", sid);
       try {
         const r = await fetch("/api/live/stop", { method: "POST", body: fd });
-        setSummary(await r.json());
+        setSummary(await readReply(r));
       } catch {}
       run.current.sid = null;
     }

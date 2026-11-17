@@ -97,6 +97,12 @@ def test_forged_or_stale_sessions_rejected():
     assert c.get("/api/incidents").status_code == 401
 
 
+def test_spaces_copied_around_password_are_ignored():
+    for typed in (PASSWORD + " ", " " + PASSWORD, PASSWORD + "\n"):
+        assert session().post("/api/login", json={"username": "boss", "password": typed}).status_code == 200
+    assert session().post("/api/login", json={"username": "boss", "password": PASSWORD + "x"}).status_code == 401
+
+
 def test_deactivated_user_is_locked_out():
     officer = session("shahu")
     admin = session("boss")
@@ -183,7 +189,8 @@ def test_full_repair_flow_needs_officer_approval():
 def test_citizen_report_and_tracking_reveals_no_staff_details():
     c = session()
     r = c.post("/api/public/report", files=photo(), data={"lat": 16.704, "lng": 74.242, "note": "Deep hole"}).json()
-    assert r["zone"] == "Shahupuri" and r["ai_found"] == 1
+    assert r["zone"] == "Shahupuri"
+    assert accounts.reports.find_one({"code": r["code"]})["ai_found"] == 1
     assert r["code"].startswith("MD-")
     inc = incidents.find_one({"source": "citizen"})
     officer = session("shahu")
@@ -200,11 +207,34 @@ def test_citizen_report_and_tracking_reveals_no_staff_details():
 def test_citizen_report_kept_for_review_when_ai_finds_nothing():
     found["dets"] = []
     r = session().post("/api/public/report", files=photo(), data={"lat": 16.704, "lng": 74.242, "kind": "alligator_crack"}).json()
-    assert r["ai_found"] == 0
+    assert accounts.reports.find_one({"code": r["code"]})["ai_found"] == 0
     inc = incidents.find_one({"source": "citizen"})
     assert inc["needs_review"] is True and inc["damage_type"] == "alligator_crack"
     officer = session("shahu")
     assert officer.patch(f"/api/incidents/{inc['_id']}", json={"severity": "High"}).json()["needs_review"] is False
+
+
+def test_citizen_report_survives_model_not_ready(monkeypatch):
+    def not_ready(path, conf=None):
+        raise RuntimeError("loading")
+    monkeypatch.setattr(detector, "detect", not_ready)
+    r = session().post("/api/public/report", files=photo(), data={"lat": 16.704, "lng": 74.242})
+    assert r.status_code == 200
+    assert incidents.find_one({"source": "citizen"})["needs_review"] is True
+    assert session().get(f"/api/public/track/{r.json()['code']}").json()["checking"] is False
+
+
+def test_unexpected_server_errors_come_back_as_json(monkeypatch):
+    import live
+
+    def broken():
+        raise ValueError("tracker could not start")
+    monkeypatch.setattr(live, "start_session", broken)
+    c = TestClient(main.app, raise_server_exceptions=False)
+    assert c.post("/api/login", json={"username": "shahu", "password": PASSWORD}).status_code == 200
+    r = c.post("/api/live/start")
+    assert r.status_code == 500 and r.headers["content-type"].startswith("application/json")
+    assert "ValueError" in r.json()["detail"] and "tracker could not start" not in r.json()["detail"]
 
 
 def test_citizen_report_needs_valid_location_type_and_photo():
@@ -213,6 +243,8 @@ def test_citizen_report_needs_valid_location_type_and_photo():
     assert c.post("/api/public/report", files=photo(), data={"lat": 19.0, "lng": 72.8}).status_code == 400
     bad = {"file": ("x.exe", io.BytesIO(b"MZ"), "application/octet-stream")}
     assert c.post("/api/public/report", files=bad, data={"lat": 16.704, "lng": 74.242}).status_code == 400
+    fake = {"file": ("road.jpg", io.BytesIO(b"not really a photo"), "image/jpeg")}
+    assert c.post("/api/public/report", files=fake, data={"lat": 16.704, "lng": 74.242}).status_code == 400
     assert incidents.count_documents({}) == 0
 
 

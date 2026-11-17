@@ -17,6 +17,8 @@ services:
         value: cpu
       - key: MEDIA_BACKEND
         value: gridfs
+      - key: LIVE_MAX_SESSIONS
+        value: 1
       - key: PORT
         value: 8000
 

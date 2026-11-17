@@ -10,9 +10,12 @@ from datetime import datetime
 from typing import Optional
 
 from bson import ObjectId
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
+
+import cv2
+import numpy as np
 
 import accounts
 import auth
@@ -102,19 +105,62 @@ def _analyse(ext, data):
     return dets, img, gps
 
 
+def _photo_gps(ext, data):
+    fd, tmp = tempfile.mkstemp(suffix=ext)
+    try:
+        os.write(fd, data)
+        os.close(fd)
+        return exif_gps(tmp)
+    finally:
+        os.unlink(tmp)
+
+
+def _process_citizen_report(code, ext, data, lat, lng, kind, note, now):
+    """Runs after the citizen already has their tracking number: AI check, photos, incidents."""
+    try:
+        try:
+            dets, img, _ = _analyse(ext, data)
+        except HTTPException:
+            # model not ready yet: keep the report anyway, an officer will review the photo
+            dets, img = [], cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+        name = f"citizen/{now:%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
+        image_url = media_store.save_image(f"{name}.jpg", img)
+        ann_url = media_store.save_image(f"{name}_det.jpg", detector.draw(img, dets)) if dets else image_url
+        incident_ids = []
+        for d in dets:
+            incident_ids.append(upsert_incident(d, lat, lng, image_url, ann_url, "citizen", now)[0])
+        if not dets:
+            # the model misses real damage, so a citizen's report is never thrown away: an officer checks it
+            inc_id, is_new = upsert_incident({**UNREVIEWED_DET, "damage_type": kind}, lat, lng, image_url, ann_url, "citizen", now)
+            incident_ids.append(inc_id)
+            if is_new:
+                incidents.update_one({"_id": ObjectId(inc_id)}, {"$set": {"needs_review": True}})
+        if note:
+            for inc_id in incident_ids:
+                incidents.update_one({"_id": ObjectId(inc_id)}, {"$push": {"history": {
+                    "at": now, "status": "Reported", "by": "Citizen", "note": note}}})
+        accounts.reports.update_one({"code": code}, {"$set": {"incident_ids": incident_ids, "processing": False,
+                                                              "ai_found": len(dets)}})
+    except Exception as e:
+        accounts.reports.update_one({"code": code}, {"$set": {"processing": False, "failed": True}})
+        print("citizen report", code, "could not be processed:", e, flush=True)
+
+
 # ------------------------------------------------------------------ citizen (no login)
 @router.post("/api/public/report")
-async def citizen_report(request: Request, file: UploadFile = File(...), lat: Optional[float] = Form(None),
-                         lng: Optional[float] = Form(None), kind: str = Form("pothole"), note: str = Form("")):
+async def citizen_report(request: Request, background: BackgroundTasks, file: UploadFile = File(...),
+                         lat: Optional[float] = Form(None), lng: Optional[float] = Form(None),
+                         kind: str = Form("pothole"), note: str = Form("")):
     times = _recent(_report_times[auth.client_ip(request)], 3600)
     if len(times) >= PUBLIC_REPORTS_PER_HOUR:
         raise HTTPException(429, "Too many reports from this connection. Please try again in an hour.")
     if kind not in ("pothole", "alligator_crack"):
         raise HTTPException(400, "Choose pothole or road cracks")
     ext, data = await _read_photo(file, MAX_PUBLIC_UPLOAD_MB)
-    dets, img, photo_gps = await run_in_threadpool(_analyse, ext, data)
+    if cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_REDUCED_GRAYSCALE_8) is None:
+        raise HTTPException(400, "This file could not be read as a photo")
     if lat is None or lng is None:
-        lat, lng = photo_gps
+        lat, lng = await run_in_threadpool(_photo_gps, ext, data)
     if lat is None or lng is None:
         raise HTTPException(400, "Please mark the location on the map, so the right ward receives your report")
     zone = zone_for(lat, lng)
@@ -123,28 +169,13 @@ async def citizen_report(request: Request, file: UploadFile = File(...), lat: Op
 
     times.append(time.time())
     now = datetime.now()
-    name = f"citizen/{now:%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
-    image_url = media_store.save_image(f"{name}.jpg", img)
-    ann_url = media_store.save_image(f"{name}_det.jpg", detector.draw(img, dets))
-    incident_ids = []
-    for d in dets:
-        inc_id, _ = upsert_incident(d, lat, lng, image_url, ann_url, "citizen", now)
-        incident_ids.append(inc_id)
-    if not dets:
-        # the model misses real damage, so a citizen's report is never thrown away: an officer checks it
-        inc_id, is_new = upsert_incident({**UNREVIEWED_DET, "damage_type": kind}, lat, lng, image_url, ann_url, "citizen", now)
-        incident_ids.append(inc_id)
-        if is_new:
-            incidents.update_one({"_id": ObjectId(inc_id)}, {"$set": {"needs_review": True}})
+    note = note.strip()[:300]
     code = "MD-" + "".join(secrets.choice(TRACK_ALPHABET) for _ in range(8))
-    accounts.reports.insert_one({"code": code, "incident_ids": incident_ids, "note": note.strip()[:300],
+    accounts.reports.insert_one({"code": code, "incident_ids": [], "processing": True, "note": note,
                                  "zone": zone, "created_at": now})
-    for inc_id in incident_ids:
-        if note.strip():
-            incidents.update_one({"_id": ObjectId(inc_id)}, {"$push": {"history": {
-                "at": now, "status": "Reported", "by": "Citizen", "note": note.strip()[:300]}}})
     accounts.log_activity("Citizen", "Submitted a report", None, f"{code} in {zone}")
-    return {"code": code, "zone": zone, "ai_found": len(dets)}
+    background.add_task(_process_citizen_report, code, ext, data, lat, lng, kind, note, now)
+    return {"code": code, "zone": zone}
 
 
 @router.get("/api/public/track/{code}")
@@ -161,7 +192,8 @@ def citizen_track(code: str):
                 last = h["status"]
         items.append({"type": inc["damage_type"], "status": inc["status"], "updated_at": _iso(inc["updated_at"]),
                       "needs_review": inc.get("needs_review", False), "steps": steps})
-    return {"code": report["code"], "submitted_at": _iso(report["created_at"]), "zone": report["zone"], "items": items}
+    return {"code": report["code"], "submitted_at": _iso(report["created_at"]), "zone": report["zone"],
+            "checking": report.get("processing", False), "items": items}
 
 
 # ------------------------------------------------------------------ repair team

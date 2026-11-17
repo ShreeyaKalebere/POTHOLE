@@ -9,6 +9,25 @@ import { api, fmtDate, TYPE_LABEL } from "../api";
 import logoUrl from "../assets/margdrishti_logo.svg";
 
 const CITY = [16.705, 74.2433];
+const SEND_SIDE = 1600;
+
+// Phone photos are often 3 to 8 MB. Shrinking before upload makes sending about ten times faster.
+// Only done when the location is already marked, because shrinking removes the photo's own GPS.
+async function shrinkPhoto(file) {
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const s = Math.min(1, SEND_SIDE / Math.max(bmp.width, bmp.height));
+    if (s === 1 && file.size < 1500000) return file;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * s);
+    canvas.height = Math.round(bmp.height * s);
+    canvas.getContext("2d").drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+    return blob && blob.size < file.size ? new File([blob], "road.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
 const pin = new L.Icon({ iconUrl: markerIcon, shadowUrl: markerShadow, iconSize: [25, 41], iconAnchor: [12, 41], shadowSize: [41, 41] });
 
 export default function Citizen() {
@@ -90,7 +109,8 @@ function Report() {
     setBusy(true);
     setErr("");
     try {
-      setDone(await api.citizenReport(file, pos, kind, note));
+      const photo = pos ? await shrinkPhoto(file) : file;
+      setDone(await api.citizenReport(photo, pos, kind, note));
     } catch (ex) {
       setErr(ex.message);
     }
@@ -104,9 +124,7 @@ function Report() {
         <p className="muted">Keep this tracking number to check progress.</p>
         <div className="track-code">{done.code}</div>
         <p>Sent to the {done.zone} ward.</p>
-        <p className="muted small">
-          {done.ai_found ? "Our system also detected road damage in your photo." : "An officer will review your photo."}
-        </p>
+        <p className="muted small">Our system is checking your photo now, and an officer will review it.</p>
         <div className="row gap">
           <Link className="btn primary" to={`/track/${done.code}`}>Track this report</Link>
           <button className="btn" onClick={() => { setDone(null); setFile(null); setPreview(null); setPos(null); setNote(""); }}>Report another</button>
@@ -188,6 +206,7 @@ function Track({ initial }) {
       {res && (
         <div className="track-result">
           <p><b>{res.code}</b><br /><span className="muted small">{res.zone} ward · sent {fmtDate(res.submitted_at)}</span></p>
+          {res.checking && <p className="notice">We are still checking your photo. Please check again in a minute.</p>}
           {res.items.map((it, k) => (
             <div key={k} className="track-item">
               <div className="row gap">

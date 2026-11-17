@@ -49,7 +49,11 @@ def check_login(username, password):
         _DUMMY_HASH = _DUMMY_HASH or hash_password(secrets.token_hex(8))
         password_matches(password, _DUMMY_HASH)
         return None
-    if not password_matches(password, user["password_hash"]) or not user.get("active", True):
+    password = password or ""
+    # a space copied along with the password from a file or message is the usual cause of a failed login
+    ok = password_matches(password, user["password_hash"]) or (
+        password != password.strip() and password_matches(password.strip(), user["password_hash"]))
+    if not ok or not user.get("active", True):
         return None
     return user
 
