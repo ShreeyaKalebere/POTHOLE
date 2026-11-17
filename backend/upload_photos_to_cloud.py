@@ -11,6 +11,7 @@ import sys
 import cv2
 import gridfs
 from pymongo import MongoClient
+from pymongo.errors import InvalidURI
 
 from config import MEDIA_DIR
 from db import incidents
@@ -42,11 +43,14 @@ def shrink(path):
 def main():
     urls = photo_urls()
     print(f"{len(urls)} photos are used by incidents on this laptop")
-    uri = getpass.getpass("Paste your MongoDB Atlas link (it will not show): ").strip()
+    uri = getpass.getpass("Paste your MongoDB Atlas link (it will not show): ").strip().strip("\"'")
     if not uri.startswith("mongodb"):
         raise SystemExit("That does not look like a MongoDB link.")
     db_name = input("Online database name [pothole_detection]: ").strip() or "pothole_detection"
-    online = MongoClient(uri, serverSelectionTimeoutMS=10000)[db_name]
+    try:
+        online = MongoClient(uri, serverSelectionTimeoutMS=10000)[db_name]
+    except InvalidURI:
+        raise SystemExit("The link was not pasted fully. Copy it again from Atlas (Connect > Drivers) and run this again.")
     online.list_collection_names()   # fails here with a clear error if the link or password is wrong
     fs = gridfs.GridFS(online, collection="media")   # the same place the website reads photos from
 

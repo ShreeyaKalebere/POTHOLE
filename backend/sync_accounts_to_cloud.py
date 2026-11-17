@@ -8,6 +8,7 @@ is overwritten, including an admin created from APP_PASSWORD. Nothing else onlin
 import getpass
 
 from pymongo import ASCENDING, MongoClient
+from pymongo.errors import InvalidURI
 
 from accounts import users as laptop_users
 
@@ -20,12 +21,15 @@ def main():
         raise SystemExit("No accounts found on this laptop. Run seed_users.py first.")
     print("Accounts to copy:", ", ".join(a["username"] for a in accounts))
 
-    uri = getpass.getpass("Paste your MongoDB Atlas link (it will not show): ").strip()
+    uri = getpass.getpass("Paste your MongoDB Atlas link (it will not show): ").strip().strip("\"'")
     if not uri.startswith("mongodb"):
         raise SystemExit("That does not look like a MongoDB link.")
     db_name = input("Online database name [pothole_detection]: ").strip() or "pothole_detection"
 
-    online = MongoClient(uri, serverSelectionTimeoutMS=10000)[db_name]["users"]
+    try:
+        online = MongoClient(uri, serverSelectionTimeoutMS=10000)[db_name]["users"]
+    except InvalidURI:
+        raise SystemExit("The link was not pasted fully. Copy it again from Atlas (Connect > Drivers) and run this again.")
     online.find_one()   # fails here with a clear error if the link or password is wrong
     online.create_index([("username", ASCENDING)], unique=True)
     for a in accounts:

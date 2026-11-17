@@ -17,11 +17,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch CPU directly from official wheels (no CUDA bloat)
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --default-timeout=120 --retries 8 torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Install backend dependencies
 COPY deploy/requirements-cloud.txt /tmp/req.txt
-RUN pip install --no-cache-dir -r /tmp/req.txt
+RUN pip install --no-cache-dir --default-timeout=120 --retries 8 -r /tmp/req.txt
 
 # Copy backend code, models, and pre-built frontend dashboard
 COPY backend/ /app/backend/
