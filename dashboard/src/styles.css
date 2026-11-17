@@ -498,3 +498,4 @@ html { scroll-behavior: smooth; }
   .panel-card h3 { font-size: 18px; }
   .stack div { grid-template-columns: 96px minmax(0, 1fr); }
 }
+.live-wait { margin: 0 10px 8px; padding: 8px 12px; border-radius: 10px; background: #ffffff14; color: #f6f4ef; font-size: 13px; line-height: 1.4; }

@@ -38,6 +38,8 @@ export default function LivePatrol() {
   const [gpsErr, setGpsErr] = useState("");
   const [stats, setStats] = useState(null);
   const [fps, setFps] = useState(0);
+  const timing = useRef({ done: 0, lastMs: 0, pendingSince: 0, noVideoSince: 0 });
+  const [, setTick] = useState(0);
   const [log, setLog] = useState([]);
   const [err, setErr] = useState("");
   const [save, setSave] = useState(true);
@@ -76,6 +78,12 @@ export default function LivePatrol() {
   }
 
   useEffect(() => () => stop(), []); // stop camera when leaving the page
+
+  useEffect(() => { // refresh the waiting message every half second while patrolling
+    if (!running) return undefined;
+    const id = setInterval(() => setTick((n) => n + 1), 500);
+    return () => clearInterval(id);
+  }, [running]);
 
   async function start() {
     if (starting.current || run.current.on) return; // a second tap while starting resets the video
@@ -137,12 +145,19 @@ export default function LivePatrol() {
 
   async function loop() {
     let last = performance.now();
+    const t = timing.current;
+    t.done = 0;
+    t.lastMs = 0;
+    t.pendingSince = 0;
+    t.noVideoSince = 0;
     while (run.current.on) {
       const v = videoRef.current;
       if (!v || !v.videoWidth) {
+        t.noVideoSince = t.noVideoSince || performance.now();
         await new Promise((r) => setTimeout(r, 100));
         continue;
       }
+      t.noVideoSince = 0;
       const c = grabRef.current;
       c.width = SEND_WIDTH;
       c.height = Math.round((v.videoHeight / v.videoWidth) * SEND_WIDTH);
@@ -157,8 +172,12 @@ export default function LivePatrol() {
         fd.append("lng", run.current.gps.lng);
       }
       try {
+        t.pendingSince = performance.now();
         const r = await fetch("/api/live/frame", { method: "POST", body: fd });
         const d = await readReply(r);
+        t.lastMs = performance.now() - t.pendingSince;
+        t.pendingSince = 0;
+        t.done += 1;
         if (!run.current.on) break;
         drawBoxes(d.detections, d.frame_size);
         setStats(d);
@@ -170,11 +189,26 @@ export default function LivePatrol() {
         setFps((f) => f * 0.8 + (1000 / (now - last)) * 0.2);
         last = now;
       } catch (e) {
+        t.pendingSince = 0;
         setErr(e.message);
         await new Promise((r) => setTimeout(r, 1000));
         if (String(e.message).includes("expired")) break;
       }
     }
+  }
+
+  // Tells the person what the patrol is waiting for, so a slow server does not look broken
+  function waitingText() {
+    const t = timing.current;
+    const now = performance.now();
+    if (t.noVideoSince && now - t.noVideoSince > 5000) return "The camera is not sending pictures. Stop and start again.";
+    if (t.pendingSince) {
+      const s = Math.round((now - t.pendingSince) / 1000);
+      if (!t.done) return `Waiting for the server's first result… ${s} s. A free cloud server can take up to a minute to warm up.`;
+      if (s >= 3) return `Waiting for the server… ${s} s`;
+    }
+    if (t.done) return `${t.done} frame${t.done === 1 ? "" : "s"} checked · last took ${(t.lastMs / 1000).toFixed(1)} s`;
+    return "";
   }
 
   function drawBoxes(dets, [fw, fh]) {
@@ -274,6 +308,7 @@ export default function LivePatrol() {
         <div><span>Zone</span>{stats?.zone ?? "–"}</div>
       </div>
 
+      {running && waitingText() && <div className="live-wait" aria-live="polite">{waitingText()}</div>}
       {err && <div className="live-err">{err}</div>}
 
       <div className="live-controls">

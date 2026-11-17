@@ -4,6 +4,7 @@ Run (from the backend folder):  uvicorn main:app --reload --port 8000
 API docs:                       http://localhost:8000/docs
 """
 import threading
+import time
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
@@ -57,6 +58,9 @@ def startup():
     def _load():
         try:
             detector.load()
+            t = time.time()
+            detector.warmup()    # the first prediction is slow; do it now, not on someone's first photo
+            print(f"Model ready, warm-up took {time.time() - t:.1f} s", flush=True)
         except Exception as e:
             print("Model not loaded yet:", e)
     threading.Thread(target=_load, daemon=True).start()   # don't block server start

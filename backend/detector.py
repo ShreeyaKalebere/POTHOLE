@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 from config import MODEL_CANDIDATES, CONF_THRESHOLD, CLASS_NAMES, BACKEND_DIR, INFER_DEVICE
 from severity import severity_score, severity_label
@@ -92,6 +93,15 @@ class Detector:
             # accuracy when it is fed 640 px images (and picks up small potholes it would miss).
             self.imgsz = int(((self.model.ckpt or {}).get("train_args") or {}).get("imgsz", 640))
         return self.info()
+
+    def warmup(self):
+        """Runs one prediction on a blank image. The first prediction after loading is much slower
+        (setup and layer fusing), so doing it at server start keeps that delay away from users."""
+        if self.model is None:
+            self.load()
+        blank = np.zeros((self.imgsz, self.imgsz, 3), dtype=np.uint8)
+        with self._lock:
+            self.model.predict(blank, imgsz=self.imgsz, device=INFER_DEVICE, verbose=False)
 
     def info(self):
         return {"loaded": self.model is not None, "weights": self.model_path,
