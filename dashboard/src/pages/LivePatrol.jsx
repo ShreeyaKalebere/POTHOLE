@@ -5,6 +5,16 @@ import { SEV_COLOR, TYPE_LABEL } from "../api";
 // Live Patrol: phone camera -> frames to backend (YOLO11 + ByteTrack) -> boxes drawn back on screen.
 // Only one frame is "in flight" at a time, so the frame rate adapts to the network and GPU speed.
 const SEND_WIDTH = 640;
+const START_TIMEOUT_MS = 90000; // a sleeping free cloud server can take about a minute to answer
+
+// Rejects with a clear message if a step hangs, so the page never stays on "Starting…" forever.
+function withTimeout(promise, ms, message) {
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms); }),
+  ]);
+}
 
 // Reads a server reply. A failed request can come back as plain text, which must not crash the page.
 async function readReply(r) {
@@ -34,6 +44,7 @@ export default function LivePatrol() {
   const [summary, setSummary] = useState(null);
 
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState("");
   const starting = useRef(false);
 
   const secure = window.isSecureContext;
@@ -41,14 +52,17 @@ export default function LivePatrol() {
   async function startCamera() {
     const v = videoRef.current;
     v.srcObject?.getTracks().forEach((t) => t.stop());
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const stream = await withTimeout(navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
-    });
+    }), 30000, "the camera did not open. Allow camera access for this site and try again.");
     v.muted = true;
     v.playsInline = true;
     v.srcObject = stream;
-    if (v.readyState < 1) await new Promise((r) => v.addEventListener("loadedmetadata", r, { once: true }));
+    if (v.readyState < 1) {
+      await withTimeout(new Promise((r) => v.addEventListener("loadedmetadata", r, { once: true })),
+        10000, "the camera opened but sent no picture. Close other apps using the camera and try again.");
+    }
     // Phones can interrupt the first play() while the stream settles; that is harmless, so try again once
     for (let attempt = 0; ; attempt++) {
       try {
@@ -70,6 +84,7 @@ export default function LivePatrol() {
     setErr("");
     setSummary(null);
     setLog([]);
+    setStage("Opening camera…");
     try {
       await startCamera();
     } catch (e) {
@@ -77,6 +92,7 @@ export default function LivePatrol() {
       setErr("Camera not available: " + e.message);
       starting.current = false;
       setBusy(false);
+      setStage("");
       return;
     }
     if (navigator.geolocation) {
@@ -91,8 +107,18 @@ export default function LivePatrol() {
         { enableHighAccuracy: true, maximumAge: 1000 }
       );
     }
+    setStage("Starting AI on the server…");
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), START_TIMEOUT_MS);
     try {
-      const r = await fetch("/api/live/start", { method: "POST" });
+      let r;
+      try {
+        r = await fetch("/api/live/start", { method: "POST", signal: ctl.signal });
+      } catch (e) {
+        throw new Error(e.name === "AbortError"
+          ? "the server took too long to start the AI. It may be waking up or short of memory. Please try again in a minute."
+          : "could not reach the server. Check your internet connection.");
+      }
       const s = await readReply(r);
       run.current = { ...run.current, on: true, sid: s.session_id, save };
       setStats(s);
@@ -102,8 +128,10 @@ export default function LivePatrol() {
       setErr("Backend: " + e.message);
       stopCamera();
     } finally {
+      clearTimeout(timer);
       starting.current = false;
       setBusy(false);
+      setStage("");
     }
   }
 
@@ -250,7 +278,7 @@ export default function LivePatrol() {
 
       <div className="live-controls">
         {!running ? (
-          <button className="btn primary big" onClick={start} disabled={!secure || busy}>{busy ? "Starting…" : "Start patrol"}</button>
+          <button className="btn primary big" onClick={start} disabled={!secure || busy}>{busy ? stage || "Starting…" : "Start patrol"}</button>
         ) : (
           <button className="btn danger big" onClick={stop}>Stop</button>
         )}

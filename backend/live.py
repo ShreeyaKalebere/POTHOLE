@@ -11,6 +11,7 @@ an incident is saved ONCE per track, after the damage is confirmed:
 The saved photo is the frame where that track had its highest confidence so far.
 Same damage seen again on a later drive is merged by GPS (incident_store, 15 m).
 """
+import copy
 import os
 import threading
 import time
@@ -22,22 +23,34 @@ import cv2
 
 import media_store
 from config import CONF_THRESHOLD, INFER_DEVICE
-from detector import Detector, boxes_to_dets, current_weights
+from detector import boxes_to_dets
 from incident_store import upsert_incident
 
 TRACKER_CFG = str(Path(__file__).with_name("bytetrack_road.yaml"))
 TRACK_CONF = 0.15        # low threshold so ByteTrack can keep weak detections attached to a track
 MIN_HITS = 3             # frames a damage must be seen before it becomes an incident
 SESSION_TIMEOUT_S = 120  # idle phone sessions are closed after 2 minutes
-MAX_SESSIONS = int(os.getenv("LIVE_MAX_SESSIONS", "3"))   # each session holds its own model copy
+MAX_SESSIONS = int(os.getenv("LIVE_MAX_SESSIONS", "3"))
+
+
+def _tracking_model():
+    """A model wrapper for one session that shares the already loaded network weights.
+
+    Loading a fresh copy per session used ~100-250 MB each, which crashed the 512 MB cloud server.
+    Only the predictor (which holds the tracker state) and the callbacks are per session.
+    """
+    from detector import detector
+    if detector.model is None:
+        detector.load()
+    model = copy.copy(detector.model)
+    model.predictor = None
+    model.callbacks = {k: list(v) for k, v in detector.model.callbacks.items()}
+    return model, detector.model_path, detector.imgsz
 
 
 class TrackSession:
     def __init__(self, source="live"):
-        from ultralytics import YOLO
-        local, src = current_weights()
-        self.model = YOLO(str(local))     # own model instance = own tracker state
-        self.imgsz = int(((self.model.ckpt or {}).get("train_args") or {}).get("imgsz", 640))
+        self.model, src, self.imgsz = _tracking_model()   # own tracker state, shared weights
         self.weights = str(src)
         self.id = uuid.uuid4().hex[:10]
         self.source = source
@@ -51,10 +64,12 @@ class TrackSession:
 
     def process(self, img, lat=None, lng=None, save=True, frame_time=None):
         """Runs detection + tracking on one frame. Returns (detections, newly_saved)."""
+        from detector import detector
         with self.lock:
             t0 = time.time()
-            res = self.model.track(img, persist=True, tracker=TRACKER_CFG, conf=TRACK_CONF,
-                                   imgsz=self.imgsz, device=INFER_DEVICE, verbose=False)[0]
+            with detector._lock:            # the network weights are shared with photo detection
+                res = self.model.track(img, persist=True, tracker=TRACKER_CFG, conf=TRACK_CONF,
+                                       imgsz=self.imgsz, device=INFER_DEVICE, verbose=False)[0]
             H, W = img.shape[:2]
             dets = [d for d in boxes_to_dets(res, W, H)]
             self.frames += 1
