@@ -8,7 +8,7 @@ MEDIA_DIR = BACKEND_DIR / "media"                                # uploaded + an
 MEDIA_DIR.mkdir(exist_ok=True)
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "pothole_detection")
+DB_NAME = os.getenv("DB_NAME", "road_damage")              # the cloud sets its own DB_NAME in render.yaml
 
 # Model: first file that exists is used. best.pt appears when training finishes.
 MODEL_CANDIDATES = [
