@@ -139,6 +139,51 @@ select, input, textarea {
   font: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 12px; background: #fff; color: var(--ink);
 }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-date-wrap {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 0 10px;
+  min-height: 40px;
+  gap: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.filter-date-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  user-select: none;
+}
+.filter-date-wrap input[type="date"] {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  font-size: 13px !important;
+  color: var(--ink) !important;
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+.filter-date-wrap input[type="date"]:invalid::-webkit-datetime-edit {
+  color: var(--muted);
+}
+.date-clear {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.date-clear:hover {
+  color: var(--ink);
+}
 .form { display: grid; gap: 8px; }
 .form label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .form input, .form select, .form textarea { width: 100%; }
@@ -314,7 +359,7 @@ select, input, textarea {
   /* page headers and filters */
   .page-head { display: block; margin-bottom: 10px; }
   .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; }
-  .filters select, .filters input { width: 100%; min-width: 0; }
+  .filters select, .filters input, .filter-date-wrap { width: 100%; min-width: 0; }
   .row.gap > .btn { flex: 1 1 100%; min-height: 44px; }
   .row.gap > .check { min-height: 44px; }
   .btn { min-height: 44px; }

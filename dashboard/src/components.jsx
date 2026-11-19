@@ -123,8 +123,44 @@ export function Filters({ f, setF, show = ["type", "severity", "status"] }) {
       )}
       {show.includes("dates") && (
         <>
-          <input type="date" value={f.date_from || ""} onChange={set("date_from")} title="From" />
-          <input type="date" value={f.date_to || ""} onChange={set("date_to")} title="To" />
+          <label className="filter-date-wrap">
+            <span className="filter-date-label">From:</span>
+            <input
+              type="date"
+              aria-label="From date"
+              value={f.date_from || ""}
+              onChange={set("date_from")}
+            />
+            {f.date_from && (
+              <button
+                type="button"
+                className="date-clear"
+                onClick={(e) => { e.preventDefault(); setF({ ...f, date_from: "" }); }}
+                aria-label="Clear from date"
+              >
+                &times;
+              </button>
+            )}
+          </label>
+          <label className="filter-date-wrap">
+            <span className="filter-date-label">To:</span>
+            <input
+              type="date"
+              aria-label="To date"
+              value={f.date_to || ""}
+              onChange={set("date_to")}
+            />
+            {f.date_to && (
+              <button
+                type="button"
+                className="date-clear"
+                onClick={(e) => { e.preventDefault(); setF({ ...f, date_to: "" }); }}
+                aria-label="Clear to date"
+              >
+                &times;
+              </button>
+            )}
+          </label>
         </>
       )}
     </div>
